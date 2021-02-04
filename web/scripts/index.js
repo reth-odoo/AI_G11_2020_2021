@@ -4,17 +4,25 @@ let Context = null
 
 //CONSTANTS
 //C_Color
-const Red = "#ff0000"
-const Yellow = "#fff200"
-const Blue = "#0000ff"
-const Green = "#00ff00"
+const Red = "rgba(255, 0, 0, 1)"
+const Yellow = "rgba(255, 155, 0, 1)"
+const Blue = "rgba(0, 0, 255, 1)"
+const Green = "rgba(0, 255, 0, 1)"
+const Grey = "rgba(100,100,100,1)"
+
+const SpaceColor = Grey
+
+//C_Fonts
+const Font = '20px serif'
 
 //C_Display
-const SpaceSize = 50;
-const SlitSize = 10;
+const SpaceSize = 30;
+const SlitSize = 5;
+const BoardOffsetX = 50;
+const BoardOffsetY = 50;
 
 //C_Board
-const BoardSize = 11;
+const BoardSize = 9;
 
 //C_Players
 const BaseWalls = 20;
@@ -41,6 +49,7 @@ $(window).on("load", () => {
         Context = Canvas.getContext("2d")
         initBoard(BoardSize)
         initPawns(BoardSize)
+        drawBoard(Context)
     }
 
 )
@@ -74,7 +83,6 @@ function initPawns(size) {
     let spaces = [Board[s_half][0], Board[0][s_half], Board[s_half][size - 1], Board[size - 1][s_half]];
     let goals_y = [size - 1, 0, size - 1, 0]
     let goals_x = [0, size - 1, 0, size - 1]
-    console.log(spaces)
 
     for (let i = 0; i < Pawns.length; i++) {
         let pawn = Pawns[i]
@@ -228,9 +236,69 @@ class Wall {
  */
 function drawBoard(ctx) {
 
+    drawPawnSpaces(ctx, BoardOffsetX, BoardOffsetY)
+
+    let H_x = BoardOffsetX + intDiv(SpaceSize, 2) - SlitSize
+    let H_y = BoardOffsetY + intDiv(SpaceSize, 2) + ((1 + BoardSize) * SlitSize) + (BoardSize * SpaceSize)
+    let V_x = BoardOffsetX - SpaceSize
+    let V_y = BoardOffsetY + ((1 + BoardSize) * SlitSize) + (BoardSize * SpaceSize) - intDiv(SpaceSize, 2)
+    drawAxis(ctx, V_x, V_y, 1, 0, -1, false)
+    drawAxis(ctx, H_x, H_y, 'A', 1, 0, true)
+
 }
 
-function drawPawnSpaces(ctx) {
+function drawPawnSpaces(ctx, start_x, start_y) {
+
+    ctx.fillStyle = SpaceColor
+
+    display_x = 0
+    display_y = 0
+
+    for (let x = 0; x < BoardSize; x++) {
+        for (let y = 0; y < BoardSize; y++) {
+            drawPawnSpace(ctx, Board[x][y], start_x, start_y);
+        }
+    }
+
+
+}
+
+function drawPawnSpace(ctx, space, start_x, start_y) {
+    let x = space.x;
+    let y = space.y;
+
+    let display_x = start_x + ((1 + x) * SlitSize) + (x * SpaceSize);
+    let display_y = start_y + ((1 + y) * SlitSize) + (y * SpaceSize);
+
+    ctx.fillStyle = SpaceColor;
+    ctx.fillRect(display_x, display_y, SpaceSize, SpaceSize);
+
+}
+
+function drawAxis(ctx, start_x, start_y, init_char, x_inc, y_inc, alphabet) {
+
+    let A_char = ' '
+
+    if (alphabet) {
+        A_char = init_char.charCodeAt(0)
+    } else {
+        A_char = init_char
+    }
+
+    ctx.font = Font
+
+    for (let i = 0; i < BoardSize; i++) {
+        console.log(A_char)
+        let disp_char = ' '
+        if (alphabet) {
+            disp_char = String.fromCharCode(A_char + i)
+        } else {
+            disp_char = (A_char + i).toString()
+        }
+        let x = start_x + ((1 + i * x_inc) * SlitSize) + (i * x_inc * SpaceSize)
+        let y = start_y + ((1 + i * y_inc) * SlitSize) + (i * y_inc * SpaceSize)
+        ctx.fillText(disp_char, x, y, SpaceSize)
+    }
 
 }
 
