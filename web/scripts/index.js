@@ -55,21 +55,87 @@ $(window).on("load", () => {
 
 class Board {
     constructor(canv, x_offset, y_offset) {
-        this.canvas = canv
-        this.context = canv.getContext("2d")
+            this.canvas = canv
+            this.context = canv.getContext("2d")
 
-        this.space_size = 30;
-        this.slit_size = 5;
-        this.x_offset = x_offset;
-        this.y_offset = y_offset;
+            this.space_size = 30;
+            this.slit_size = 5;
+            this.x_offset = x_offset;
+            this.y_offset = y_offset;
 
-        this.size = 9;
+            this.size = 9;
 
-        //board_rep is a 2D-array of pawnSpaces
-        this.board_rep = this.init_board()
-        this.pawns = this.init_pawns()
-        this.walls = []
+            //board_rep is a 2D-array of pawnSpaces
+            this.board_rep = this.init_board()
+            this.pawns = this.init_pawns()
 
+        }
+        //returns null if invalid (parent_space must not be utmost right or down), new wall if valid
+    add_wall(parent_space, placed_by, goes_down) {
+
+
+        let x = parent_space.x
+        let y = parent_space.y
+        let board = this.board_rep
+
+        if (placed_by.wall_nb <= 0) {
+            console.log("pawn tried to place a wall they didn't have")
+            return null
+        }
+        if (parent_space === null) {
+            console.log("parent space for wall is null")
+            return null
+        }
+        if (x == this.size - 1 || y == this.size - 1) {
+            console.log("tried to place a wall with an origin that would put it outside the board")
+            return null
+        }
+        //check no wall starting on same space
+        let origin_space = parent_space
+        let o_walls = origin_space.walls
+
+
+        for (let i = 0; i < o_walls.length; i++) {
+            let wall = o_walls[i]
+            if (wall.space === parent_space) {
+                console.log("wall already set on that space")
+                return null
+            }
+        }
+
+        //check no wall in the same direction starting next space
+        let next_space = null
+        if (goes_down)
+            next_space = board[x][y + 1]
+        else
+            next_space = board[x + 1][y]
+
+        let n_walls = next_space.walls;
+
+        for (let i = 0; i < n_walls.length; i++) {
+            let wall = n_walls[i]
+            if (wall.space === next_space)
+                if (wall.goes_down === goes_down) {
+                    console.log("overlapping walls")
+                    return null
+                }
+        }
+        //known OK the fact that wall only go down and right
+        let new_wall = new Wall(parent_space, goes_down)
+
+        origin_space.walls.push(new_wall)
+        next_space.walls.push(new_wall)
+        if (goes_down) {
+            board[x + 1][y + 1].walls.push(new_wall)
+            board[x + 1][y].walls.push(new_wall)
+        } else {
+            board[x][y + 1].walls.push(new_wall)
+            board[x + 1][y + 1].walls.push(new_wall)
+        }
+
+        placed_by.wall_nb -= 1
+
+        return new_wall
     }
 
     init_board() {
@@ -218,7 +284,7 @@ class PawnSpace {
         this.x = x;
         this.y = y;
         this.pawn = null;
-        this.walls = null;
+        this.walls = [];
 
 
         //compute real x and y (shouldn't need to change)
@@ -229,6 +295,12 @@ class PawnSpace {
 
         this.real_x = start_x + ((1 + x) * slit_size) + (x * space_size);
         this.real_y = start_y + ((1 + y) * slit_size) + (y * space_size);
+    }
+
+    equals(space) {
+        if (this.board === space.board && this.x === space.x && this.y === space.y)
+            return true
+        return false
     }
 
     draw() {
@@ -341,68 +413,25 @@ class Pawn {
 }
 class Wall {
     //if it doesn't go down, it goes right
-    constructor(parent_space, placed_by, goes_down) {
+    constructor(parent_space, goes_down) {
         this.space = parent_space
-        this.x = parent_space.x
-        this.y = parent_space.y
         this.goes_down = goes_down
-        return this.setWall(x, y, goes_down, placed_by)
+
     }
     blocks(space1, space2) {
-            //if they're offset on the same axis as the wall blocks
-            if ((this.goes_down && absolute(space1.x - space2.x) > 0) || (!this.goes_down && absolute(space1.y - space2.y) > 0)) {
-                //if both spaces are adjacent to the wall true
-                let s1w = space1.walls
-                let s2w = space2.walls
-                for (let i1 = 0; i1 < s1w.length; i1++) {
-                    for (let i2 = 0; i2 < s2w.length; i2++) {
-                        if (s1w[i1] === s2w[i2] && s1w[i1] === this)
-                            return true
-                    }
+        //if they're offset on the same axis as the wall blocks
+        if ((this.goes_down && absolute(space1.x - space2.x) > 0) || (!this.goes_down && absolute(space1.y - space2.y) > 0)) {
+            //if both spaces are adjacent to the wall true
+            let s1w = space1.walls
+            let s2w = space2.walls
+            for (let i1 = 0; i1 < s1w.length; i1++) {
+                for (let i2 = 0; i2 < s2w.length; i2++) {
+                    if (s1w[i1] === s2w[i2] && s1w[i1] === this)
+                        return true
                 }
             }
-            return false
         }
-        //returns null if invalid, updates board and returns this if valid
-    setWall(x, y, goes_down, placed_by) {
-        let board = this.space.board
-
-        if (placed_by.wall_nb <= 0) {
-            console.log("pawn tried to place a wall they didn't have")
-            return null
-        }
-        //check no wall starting on same space
-        let origin_space = board[x][y];
-        let o_walls = origin_space.walls;
-
-
-        if (o_walls) {
-            for (let i = 0; i < o_walls.length; i++) {
-                let wall = o_walls[i]
-                if (wall.x === x && wall.y === y)
-                    return null
-            }
-        }
-
-        //check no wall in the same direction starting next space
-        let next_space = null
-        if (goes_down)
-            next_space = board[x][y - 1]
-        else
-            next_space = board[x + 1][y]
-
-        let n_walls = next_space.walls;
-
-        for (let i = 0; i < n_walls.length; i++) {
-            let wall = n_walls[i]
-            if (wall.x === x && wall.y === y)
-                if (wall.goes_down === goes_down)
-                    return null
-        }
-        //known OK the fact that wall only go down and right
-        //TODO: Add the wall to the list of adjacent walls for all relevant spaces
-        //TODO: Add to the wall list if we decide to use it(mostly for drawing)
-        return this
+        return false
     }
     draw() {
         let space = this.space
@@ -414,41 +443,22 @@ class Wall {
 
         let orig_x = space.real_x
         let orig_y = space.real_y
-        let target_x = 0
-        let target_y = 0
+        let size_x = 0
+        let size_y = 0
 
         if (this.goes_down) {
             orig_x = orig_x + space_size
-            target_x = orig_x + slit_size
-            target_y = orig_y + slit_length
+            size_x = slit_size
+            size_y = slit_length
         } else {
             orig_y = orig_y + space_size
-            target_x = orig_x + slit_length
-            target_y = orig_y + slit_size
+            size_x = slit_length
+            size_y = slit_size
         }
 
         let ctx = board.context
         ctx.fillStyle = WallColor
-        ctx.fillRect(orig_x, orig_y, target_x, target_y)
+        ctx.fillRect(orig_x, orig_y, size_x, size_y)
     }
-
-}
-
-
-
-
-
-
-
-
-
-
-//may not be needed, draw them when drawing spaces
-function drawPawns() {
-
-}
-
-//could be drawn while spaces are drawn
-function drawWalls() {
 
 }
