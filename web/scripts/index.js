@@ -135,6 +135,8 @@ class Board {
 
         placed_by.wall_nb -= 1
 
+        new_wall.draw()
+
         return new_wall
     }
 
