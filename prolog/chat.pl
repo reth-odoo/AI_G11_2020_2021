@@ -24,7 +24,6 @@
 
 /*                      !!!    A MODIFIER   !!!                          */
 
-
 produire_reponse([fin],[L1]) :-
    L1 = [merci, de, m, '\'', avoir, consulte], !.    
 
@@ -40,9 +39,6 @@ produire_reponse(_,[L1,L2, L3]) :-
    L2 = [les, etudiants, vont, m, '\'', aider, '.' ],
    L3 = ['vous le verrez !'].
 
-
-
-
 match_pattern(Pattern,Lmots) :-
    sublist(Pattern,Lmots).
 
@@ -54,19 +50,11 @@ match_pattern_dist([N,Pattern|Lpatterns],Lmots) :-
    within_dist(N,Pattern,Lmots,Lmots_rem),
    match_pattern_dist(Lpatterns,Lmots_rem).
 
-
-
-
-
-
 within_dist(_,Pattern,Lmots,Lmots_rem) :-
    prefixrem(Pattern,Lmots,Lmots_rem).
 within_dist(N,Pattern,[_|Lmots],Lmots_rem) :-
    N > 1, Naux is N-1,
   within_dist(Naux,Pattern,Lmots,Lmots_rem).
-
-
-
 
 
 sublist(SL,L) :- 
@@ -81,8 +69,6 @@ prefixrem([],L,L).
 prefixrem([H|T],[H|L],Lr) :- prefixrem(T,L,Lr).
 
 
-
-
 % ----------------------------------------------------------------%
 
 taille_jeu(9,9).
@@ -95,14 +81,14 @@ mclef(barriere,5).
 mclef(barrieres,5).
 
 
-% ----------------------------------------------------------------%
+% -------------------------ORDRE---------------------------------%
 
 regle_rep(commence,1,
   [ qui, commence, le, jeu ],
   [ [ "c'est", au, pion, bleu, de, commencer ],
     [ puis, aux, pions, "rouge," , vert, et, "bleu." ] ] ).
 
-% ----------------------------------------------------------------%
+% ----------------------NB_BARRIERES------------------------------%
 
 regle_rep(barrieres,5,
   [ [ combien ], 3, [ barrieres ], 5, [ debut, du, jeu ] ],
@@ -110,6 +96,13 @@ regle_rep(barrieres,5,
 
      nb_barriere_par_joueur(X).
    
+% ----------------------------------------------------------------%
+
+regle_rep(barrieres,5,
+  [ [ combien ], 3, [ barrieres ], 5, [ debut, du, jeu ] ],
+  [ [ vous, disposez, de, X, "barrieres." ] ]) :-
+
+     nb_barriere_par_joueur(X).
 
 
 
@@ -392,7 +385,7 @@ quoridoria :-
 /*                                                                       */
 /* --------------------------------------------------------------------- */
 
-/*:- quoridoria.*/
+:- quoridoria.
 
 
 

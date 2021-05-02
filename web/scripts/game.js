@@ -41,7 +41,7 @@ function absolute(x) {
 //startup
 $(window).on("load", () => {
         let canvas = $("#gameCanvas")[0]
-        let game_board = new Board(canvas, 50, 50)
+        let game_board = new Board(canvas, 90, 70)
         game_board.init_board()
         game_board.draw()
         BOARD = game_board
@@ -278,7 +278,6 @@ class PawnSpace {
      * @param {number} x, the position of the space
      * @param {number} y, the position of the space
      * @param {Pawn} pawn, the pawn on the space or null
-     * @param {[Wall]} walls, the walls adjacent to the piece
      */
     constructor(board, x, y) {
         this.board = board
