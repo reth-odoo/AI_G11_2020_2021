@@ -2,6 +2,8 @@
 The program just needs to be able to make a decision based on the state of the game
 */
 
+
+
 /*DATA Representation
 NWaals = [NWaals1, NWaals2, NWalls3, NWaals4]
 
@@ -13,6 +15,10 @@ Walls = [[X1,Y1,'v'],[X2,Y2,'h']....] (top-left corner)
 player_separator(PLAYER_NUMBER, Positions, NWalls, PlayerNWalls, OtherNWalls, PlayerPos, OtherPos):- 
  nth1(PLAYER_NUMBER, Positions, PlayerPos, OtherPos), 
  nth1(PLAYER_NUMBER, NWalls, PlayerNWalls, OtherNWalls).
+
+
+
+
 
 
 %-VALID STATES-
@@ -44,19 +50,48 @@ valid_position(Positions):-
 
 
 %valid_transitions Simon
-move(XDif,YDif,X,Y,):- .
-jump_over():- .
+/*ROUGH START/EXAMPLE
+%valid_move(XTarg,YTarg,X,Y):- 
+%valid_position(XTarg,YTarg),
+%.
+
+%move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(); move_up(); move_down();
+move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X-1, noWallsX(XTarg,X,Y,Walls).
+%move_up
+%move_right
+%move_down
+
+noWallsX(XTarg,X,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1-1, Y1\=Y, Y2 \= Y)).
+%noWallsY():-.
 
 
+%'move_left and move_up will check for walls, remains to check for players'
+%move_diag(XTarg,YTarg,X,Y,Walls):- (move_left;move_right),(move_up,move_down),...
+%jump_over():- .
 
 
-
+place_wall():- .
 
 next_move():- .
+*/
+
+
+
 
 %choose_evaluation Jeremy
-evaluate(PlayePos,Walls,[NW1,NW2,NW3,NW4]):- .
+/*evaluation should represent the utility of a certain state for:
+-The current player
+-All other participants (as one entity -> just sum or more complex?)*/
+
+evaluate(PlayePos,Walls,[NW1,NW2,NW3,NW4], evaluation):- .
 /* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
 
+
+
 %alpha_beta Marien
+
+/*check evaluation of final state (at some depth) for every possible move from:
+-The current player
+-All other participants (as one entity)
+*/
 alpha_beta():- .
