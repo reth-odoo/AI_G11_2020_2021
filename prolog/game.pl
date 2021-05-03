@@ -50,30 +50,38 @@ valid_position(Positions):-
 
 
 %valid_transitions Simon
-/*ROUGH START/EXAMPLE
+ROUGH START/EXAMPLE
 %valid_move(XTarg,YTarg,X,Y):- 
 %valid_position(XTarg,YTarg),
 %.
 
-%move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(); move_up(); move_down();
-move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X-1, noWallsX(XTarg,X,Y,Walls).
-%move_up
-%move_right
-%move_down
+%move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(XTarg,X,Walls); move_up(YTarg,Y,Walls); move_down(YTarg,Y,Walls);jump_over().
+move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X, noWallsX(XTarg,X,Y,Walls).
+move_up(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y, noWallsY(YTarg,X,Y,Walls).
+move_right(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X+1, noWallsX(XTarg,X,Y,Walls).
+move_down(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y-1, noWallsY(YTarg,X,Y,Walls).
 
-noWallsX(XTarg,X,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1-1, Y1\=Y, Y2 \= Y)).
-%noWallsY():-.
+
+
+noWallsX(XTarg,X,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1+1, Y1\=Y, Y2 \= Y)).
+noWallsY(YTarg,X,Y,Walls):-forall(member([YTarg,X1,'h'], Walls), (X2 is X1-1, X1\=X, X2 \= X)).
+
+
+% DiagonaleTopRight(X,Y,NewX,NewY):- [X is NewX-1]  AND  [position_invalide(NewX,NewY)] AND [cant_jump(X,Y,X+2,Y)] AND [(NoWall(X,Y,X,Y+1) OR NoWall(NewX,Y,NewX,Y+1))]
 
 
 %'move_left and move_up will check for walls, remains to check for players'
 %move_diag(XTarg,YTarg,X,Y,Walls):- (move_left;move_right),(move_up,move_down),...
-%jump_over():- .
+%move_diag(XTarg,Ytarg,X,Y,Walls):- (move_left;move_right),(move_up;move_down).
+
+%check if the case between start position and target position is a player and there is no wall behind it
+%jump_over(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- not(notTwicePawn(Positions)), valid_position(XTarg,YTarg)
 
 
 place_wall():- .
 
 next_move():- .
-*/
+
 
 
 
