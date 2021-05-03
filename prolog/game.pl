@@ -15,8 +15,17 @@ player_separator(PLAYER_NUMBER, Positions, NWalls, PlayerNWalls, OtherNWalls, Pl
  nth1(PLAYER_NUMBER, NWalls, PlayerNWalls, OtherNWalls).
 
 
-%valid_states
+%-VALID STATES-
+
+/*check that the pawn is at a valid coordinate*/
 on_board([X,Y]):- X>0, X<9, Y>0, Y<9.
+/*check that no two pawns are on the same space
+for i in {1,2,3,4}{
+    pick the i-th [X,Y] and for all remaining [X1,Y1]{
+        check either X!=X1 OR Y!=Y1
+    }
+}
+*/
 notTwicePawn(Positions):- 
  forall(member(PLAYER_NUMBER,[1,2,3,4]),
      (
@@ -26,10 +35,13 @@ notTwicePawn(Positions):-
         )
         ).
 
+/*call all state validity check*/
 valid_position(Positions):- 
  forall(member(P, Positions),(on_board(P))), 
 
  notTwicePawn(Positions).
+
+
 
 %valid_transitions Simon
 move(XDif,YDif,X,Y,):- .
