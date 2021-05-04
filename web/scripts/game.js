@@ -79,15 +79,15 @@ class Board {
         let board = this.board_rep
 
         if (placed_by.wall_nb <= 0) {
-            console.log("pawn tried to place a wall they didn't have")
+            console.error("pawn tried to place a wall they didn't have")
             return null
         }
         if (parent_space === null) {
-            console.log("parent space for wall is null")
+            console.error("parent space for wall is null")
             return null
         }
-        if (x == this.size - 1 || y == this.size - 1) {
-            console.log("tried to place a wall with an origin that would put it outside the board")
+        if ((x >= this.size - 1 && goes_down) || (y >= this.size - 1 && !goes_down)) {
+            console.error("tried to place a wall with an origin that would put it outside the board")
             return null
         }
         //check no wall starting on same space
@@ -105,20 +105,49 @@ class Board {
 
         //check no wall in the same direction starting next space
         let next_space = null
+        let next_x = x
+        let next_y = y
         if (goes_down)
-            next_space = board[x][y + 1]
+            next_y = y + 1
         else
-            next_space = board[x + 1][y]
+            next_x = x + 1
 
-        let n_walls = next_space.walls;
+        if (next_x < BOARD.size && next_y < BOARD.size) {
+            next_space = board[next_x][next_y]
 
-        for (let i = 0; i < n_walls.length; i++) {
-            let wall = n_walls[i]
-            if (wall.space === next_space)
-                if (wall.goes_down === goes_down) {
-                    console.log("overlapping walls")
-                    return null
-                }
+            let n_walls = next_space.walls;
+
+            for (let i = 0; i < n_walls.length; i++) {
+                let wall = n_walls[i]
+                if (wall.space === next_space)
+                    if (wall.goes_down === goes_down) {
+                        console.log("overlapping walls")
+                        return null
+                    }
+            }
+        }
+        //check no wall in the same direction starting previous space
+        let prev_space = null
+        let prev_x = x
+        let prev_y = y
+        if (goes_down)
+            prev_y = y - 1
+        else
+            prev_x = x - 1
+
+        if (prev_x >= 0 && prev_y >= 0) {
+            prev_space = board[prev_x][prev_y]
+
+            let n_walls = prev_space.walls;
+
+            for (let i = 0; i < n_walls.length; i++) {
+                let wall = n_walls[i]
+                if (wall.space === prev_space)
+                    if (wall.goes_down === goes_down) {
+                        console.log("overlapping walls")
+                        return null
+                    }
+            }
         }
         //known OK the fact that wall only go down and right
         let new_wall = new Wall(parent_space, goes_down)
@@ -351,10 +380,11 @@ class Pawn {
     }
     moveTo(space) {
         if (!space) {
+            console.error('Pawn.moveTo : no space provided')
             return false
         }
         if (space.pawn) {
-            console.log("tried moving a pawn on a pawn")
+            console.error('Pawn.moveTo : tried moving onto another pawn')
             return false
         }
         //if not on a space, just set it
@@ -371,19 +401,27 @@ class Pawn {
         let dist = manhattanDistance(current_x, current_y, target_x, target_y)
         if (dist == 1) {
             //if going right next, check that no wall blocking on this space
-            let walls = this.space;
+            let walls = this.space.walls;
             for (let i = 0; i < walls.length; i++) {
-                if (walls[i].blocks(this.space, space))
+                if (walls[i].blocks(this.space, space)) {
+                    console.error('Pawn.moveTo : wall blocking this path')
                     return false
+                }
             }
             this.setSpace(space)
             return true
         } else if (dist == 2) {
-            //TODO check that pawn between third space in that cardinal direction
-            //AND (wall blocking the way between that space and the third ''') OR (pawn on the third ''') 
+            this.setSpace(space)
+            return true
+                //TODO check that pawn between third space in that cardinal direction
+                //AND (wall blocking the way between that space and the third ''') OR (pawn on the third ''') 
         } else if (dist == 3) {
-            //TODO check that other pawn in front
+            this.setSpace(space)
+            return true
+                //TODO check that other pawn in front
         }
+        console.error('Pawn.moveTo : tried to move too far ', dist)
+        return false
     }
 
     draw() {
@@ -463,4 +501,65 @@ class Wall {
         ctx.fillRect(orig_x, orig_y, size_x, size_y)
     }
 
+}
+
+//Turn settings
+
+//in order of play(clockwise)
+NbPlayers = 4
+PlayersAre = ["human", "ai", "human", "ai"]
+ColorTurn = ["Red", "Yellow", "Green", "Blue"]
+TurnOf = 0
+
+function nextTurn() {
+    if (TurnOf >= NbPlayers - 1) {
+        TurnOf = 0
+    } else if (TurnOf >= 0) {
+        TurnOf += 1
+    } else {
+        TurnOf = 0
+        alert("Turns were scrambled, back to 0")
+    }
+    document.getElementById("turnIndicator").innerHTML = `Turn of ${ColorTurn[TurnOf]}`
+}
+
+//simplified interface
+
+function displayError(errorString) {
+    document.getElementById("gameErrorBox").innerHTML = errorString
+}
+
+function moveTo(x, y) {
+    x = x - 1
+    y = BOARD.size - y
+
+    if (x < 0 || x > BOARD.size - 1 || y < 0 || y > BOARD.size - 1)
+        alert("invalid coordinates")
+
+    let p = BOARD.pawns[TurnOf]
+
+    if (!p.moveTo(BOARD.board_rep[x][y])) {
+        displayError("Illegal move")
+    } else {
+        BOARD.draw()
+        nextTurn()
+    }
+}
+
+function placeWall(x, y, vert) {
+    x = x - 1
+    y = BOARD.size - y
+
+    let p = BOARD.pawns[TurnOf]
+
+    if (p.wall_nb > 0) {
+        if (BOARD.add_wall(BOARD.board_rep[x][y], p, vert)) {
+            BOARD.draw()
+            nextTurn()
+        } else
+            displayError("invalid wall position")
+    } else {
+        displayError("you do not have any more walls")
+    }
+    BOARD.draw()
 }

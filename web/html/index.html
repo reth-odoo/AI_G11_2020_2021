@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>game</title>
     <script src="../scripts/jquery.js"></script>
-    <script src="../scripts/index.js"></script>
+    <script src="../scripts/game.js"></script>
 </head>
 
 <body>
@@ -13,6 +13,23 @@
     <canvas id="gameCanvas" width="500" height="500" style="border:1px solid #000000;">
 
 </canvas>
+    <br>
+    <input type=text id=playerInput></input>
+    <br>
+    <span id=turnIndicator>Turn of Red</span>
+    <br>
+    <span id=gameErrorBox></span>
+
+    <div id='chatbox'>
+        <p id="log7" class="log">&nbsp;</p>
+        <p id="log6" class="log">&nbsp;</p>
+        <p id="log5" class="log">&nbsp;</p>
+        <p id="log4" class="log">&nbsp;</p>
+        <p id="log3" class="log">&nbsp;</p>
+        <p id="log2" class="log">&nbsp;</p>
+        <p id="log1" class="log">&nbsp;</p>
+        <input type="text" name="chat" id="textbox" placeholder="Hi there! Type here to talk to me." onfocus="">
+    </div>
 
 </body>
 
