@@ -32,7 +32,7 @@ for i in {1,2,3,4}{
     }
 }
 */
-notTwicePawn(Positions):- 
+not_twice_pawn(Positions):- 
  forall(member(PLAYER_NUMBER,[1,2,3,4]),
      (
          forall(
@@ -41,30 +41,34 @@ notTwicePawn(Positions):-
         )
         ).
 
+
 /*call all state validity check*/
 valid_position(Positions):- 
  forall(member(P, Positions),(on_board(P))), 
 
- notTwicePawn(Positions).
+ not_twice_pawn(Positions).
 
+
+/*Check availability of a coordinate*/
+empty_case(Positions,XTarg,YTarg):-on_board([XTarg,YTarg]), forall(member([X,Y],Positions), (X\=XTarg, Y\=YTarg)).
 
 
 %valid_transitions Simon
-ROUGH START/EXAMPLE
+%ROUGH START/EXAMPLE
 %valid_move(XTarg,YTarg,X,Y):- 
 %valid_position(XTarg,YTarg),
 %.
 
-%move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(XTarg,X,Walls); move_up(YTarg,Y,Walls); move_down(YTarg,Y,Walls);jump_over().
-move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X, noWallsX(XTarg,X,Y,Walls).
-move_up(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y, noWallsY(YTarg,X,Y,Walls).
-move_right(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X+1, noWallsX(XTarg,X,Y,Walls).
-move_down(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y-1, noWallsY(YTarg,X,Y,Walls).
+move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(XTarg,X,Walls); move_up(YTarg,Y,Walls); move_down(YTarg,Y,Walls).
+move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):-no_walls_x(X,Y,Walls).
+move_up(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- no_walls_y(Y,X,Walls).
+move_right(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X+1, no_walls_x(XTarg,Y,Walls).
+move_down(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y-1, no_walls_y(YTarg,X,Walls).
 
 
 
-noWallsX(XTarg,X,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1+1, Y1\=Y, Y2 \= Y)).
-noWallsY(YTarg,X,Y,Walls):-forall(member([YTarg,X1,'h'], Walls), (X2 is X1-1, X1\=X, X2 \= X)).
+no_walls_x(XTarg,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1+1, Y1\=Y, Y2 \= Y)).
+no_walls_y(YTarg,X,Walls):-forall(member([YTarg,X1,'h'], Walls), (X2 is X1-1, X1\=X, X2 \= X)).
 
 
 % DiagonaleTopRight(X,Y,NewX,NewY):- [X is NewX-1]  AND  [position_invalide(NewX,NewY)] AND [cant_jump(X,Y,X+2,Y)] AND [(NoWall(X,Y,X,Y+1) OR NoWall(NewX,Y,NewX,Y+1))]
@@ -76,7 +80,9 @@ noWallsY(YTarg,X,Y,Walls):-forall(member([YTarg,X1,'h'], Walls), (X2 is X1-1, X1
 
 %check if the case between start position and target position is a player and there is no wall behind it
 %jump_over(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- not(notTwicePawn(Positions)), valid_position(XTarg,YTarg)
-
+jump_over_right(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):-X2 is X1+1, X1 is X+1,Y1 is Y+1, not(empty_case(Positions,X1,Y1)), valid_position(XTarg,YTarg),no_walls_x(X2,Y,Walls),no_walls_x(X1,Y,Walls).
+%or
+jump_over_right(PLAYER_NUMBER, Positions,X,Y,Walls):-X2 is X1+1, X1 is X+1,Y1 is Y+1, not(empty_case(Positions,X1,Y1)), valid_position(X2,Y),no_walls_x(X2,Y,Walls),no_walls_x(X1,Y,Walls).
 
 place_wall():- .
 
