@@ -21,10 +21,16 @@ player_separator(PLAYER_NUMBER, Positions, NWalls, PlayerNWalls, OtherNWalls, Pl
 
 
 
-%-VALID STATES-
+/*Valid States (Placements)*/
+
+/*Pawn placement*/
+
+
 
 /*check that the pawn is at a valid coordinate*/
 on_board([X,Y]):- X>0, X<9, Y>0, Y<9.
+
+
 /*check that no two pawns are on the same space
 for i in {1,2,3,4}{
     pick the i-th [X,Y] and for all remaining [X1,Y1]{
@@ -41,6 +47,21 @@ not_twice_pawn(Positions):-
         )
         ).
 
+
+/*call all state validity check*/
+valid_position(Positions):- 
+ forall(member(P, Positions),(on_board(P))), 
+
+ not_twice_pawn(Positions).
+
+
+
+
+
+/*Walls placement*/
+
+
+
 intersecting_walls(X1,Y1,'h',X2,Y2,'h'):- Y1=Y2, (X1=X2 ; X1 is X2-1 ; X1 is X2 + 1).
 intersecting_walls(X1,Y1,'v',X2,Y2,'v'):- X1=X2, (Y1=Y2 ; Y1 is Y2-1 ; Y1 is Y2 + 1).
 intersecting_walls(X1,Y1,'v',X2,Y2,'h'):- X1=X2, Y1=Y2.
@@ -55,43 +76,37 @@ wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
                             ).
 
 
-/*call all state validity check*/
-valid_position(Positions):- 
- forall(member(P, Positions),(on_board(P))), 
-
- not_twice_pawn(Positions).
 
 
-/*Check availability of a coordinate*/
-empty_case(Positions,XTarg,YTarg):-on_board([XTarg,YTarg]), forall(member([X,Y],Positions), (X\=XTarg, Y\=YTarg)).
 
+/*Valid Transitions (Moves)*/
 
-%valid_transitions Simon
-%ROUGH START/EXAMPLE
-%valid_move(XTarg,YTarg,X,Y):- 
-%valid_position(XTarg,YTarg),
-%.
+/*biggest on 3, smallest on 4*/
+biggest_of_2(X,Y,X,Y):- X>Y.
+biggest_of_2(X,Y,Y,X):- Y>X.
+
+/*for all walls starting on this Y or the level above, */
+no_walls_x(XTarg,XOrig,Y,Walls):-forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; member([X,Y2,'v'],Walls)))
+                            , (biggest_of_2(XTarg,XOrig,BigX,SmallX), (BigX < X ; SmallX > X))).
+
+no_walls_x(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
+                            , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY < Y ; SmallY > Y))).
 
 move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(XTarg,X,Walls); move_up(YTarg,Y,Walls); move_down(YTarg,Y,Walls).
-move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):-no_walls_x(X,Y,Walls).
-move_up(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- no_walls_y(Y,X,Walls).
+move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X-1, no_walls_x(X,Y,Walls).
+move_up(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y+1, no_walls_y(Y,X,Walls).
 move_right(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X+1, no_walls_x(XTarg,Y,Walls).
 move_down(PLAYER_NUMBER, Positions, YTarg, X, Y,Walls):- YTarg is Y-1, no_walls_y(YTarg,X,Walls).
 
 
 
-no_walls_x(XTarg,Y,Walls):-forall(member([XTarg,Y1,'v'], Walls), (Y2 is Y1+1, Y1\=Y, Y2 \= Y)).
-no_walls_y(YTarg,X,Walls):-forall(member([YTarg,X1,'h'], Walls), (X2 is X1-1, X1\=X, X2 \= X)).
+/*DiagonaleTopRight(X,Y,NewX,NewY):- [X is NewX-1]  AND  [position_invalide(NewX,NewY)] AND [cant_jump(X,Y,X+2,Y)] AND [(NoWall(X,Y,X,Y+1) OR NoWall(NewX,Y,NewX,Y+1))]
+*/
 
+/*move_diag(XTarg,YTarg,X,Y,Walls):- (move_left;move_right),(move_up,move_down),...
+move_diag(XTarg,Ytarg,X,Y,Walls):- (move_left;move_right),(move_up;move_down).*/
 
-% DiagonaleTopRight(X,Y,NewX,NewY):- [X is NewX-1]  AND  [position_invalide(NewX,NewY)] AND [cant_jump(X,Y,X+2,Y)] AND [(NoWall(X,Y,X,Y+1) OR NoWall(NewX,Y,NewX,Y+1))]
-
-
-%'move_left and move_up will check for walls, remains to check for players'
-%move_diag(XTarg,YTarg,X,Y,Walls):- (move_left;move_right),(move_up,move_down),...
-%move_diag(XTarg,Ytarg,X,Y,Walls):- (move_left;move_right),(move_up;move_down).
-
-%check if the case between start position and target position is a player and there is no wall behind it
+/*check if the case between start position and target position is a player and there is no wall behind it*/
 %jump_over(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- not(notTwicePawn(Positions)), valid_position(XTarg,YTarg)
 jump_over_right(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):-X2 is X1+1, X1 is X+1,Y1 is Y+1, not(empty_case(Positions,X1,Y1)), valid_position(XTarg,YTarg),no_walls_x(X2,Y,Walls),no_walls_x(X1,Y,Walls).
 %or
@@ -99,7 +114,7 @@ jump_over_right(PLAYER_NUMBER, Positions,X,Y,Walls):-X2 is X1+1, X1 is X+1,Y1 is
 
 place_wall():- .
 
-next_move():- .
+next_move():- place_wall ; move_one ; jump_over ; move_diag.
 
 
 
@@ -121,4 +136,4 @@ evaluate(PlayePos,Walls,[NW1,NW2,NW3,NW4], evaluation):- .
 -The current player
 -All other participants (as one entity)
 */
-alpha_beta():- .
+%alpha_beta(Eval, Alpha, Beta, Depth):- .
