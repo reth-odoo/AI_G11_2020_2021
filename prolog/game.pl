@@ -41,6 +41,19 @@ not_twice_pawn(Positions):-
         )
         ).
 
+intersecting_walls(X1,Y1,'h',X2,Y2,'h'):- Y1=Y2, (X1=X2 ; X1 is X2-1 ; X1 is X2 + 1).
+intersecting_walls(X1,Y1,'v',X2,Y2,'v'):- X1=X2, (Y1=Y2 ; Y1 is Y2-1 ; Y1 is Y2 + 1).
+intersecting_walls(X1,Y1,'v',X2,Y2,'h'):- X1=X2, Y1=Y2.
+intersecting_walls(X1,Y1,'h',X2,Y2,'v'):- intersecting_walls(X2,Y2,'v',X1,Y1,'h').
+
+valid_wall_placement(X1,Y1,'v'):- X1<7, Y1<8, X1>=0, Y1>=0.
+valid_wall_placement(X1,Y1,'h'):- X1<8, Y1<7, X1>=0, Y1>=0.
+
+wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
+                                (valid_wall_placement(X1,Y2,'v'),
+                                not(intersecting_walls(X1,Y1,'v',X2,Y2,Orientation))
+                            ).
+
 
 /*call all state validity check*/
 valid_position(Positions):- 
