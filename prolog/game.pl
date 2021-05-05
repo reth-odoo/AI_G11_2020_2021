@@ -85,12 +85,12 @@ wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
 biggest_of_2(X,Y,X,Y):- X>Y.
 biggest_of_2(X,Y,Y,X):- Y>X.
 
-/*for all walls starting on this Y or the level above, */
+/*for all walls starting on this Y or the level above, check that X not between the coordinates*/
 no_walls_x(XTarg,XOrig,Y,Walls):-forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; member([X,Y2,'v'],Walls)))
-                            , (biggest_of_2(XTarg,XOrig,BigX,SmallX), (BigX < X ; SmallX > X))).
+                            , (biggest_of_2(XTarg,XOrig,BigX,SmallX), (BigX <= X ; SmallX > X))).
 
 no_walls_x(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
-                            , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY < Y ; SmallY > Y))).
+                            , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY <= Y ; SmallY > Y))).
 
 move_one(PLAYER_NUMBER, Positions, XTarg,YTarg,X,Y,Walls):- valid_position(XTarg,YTarg), move_left(XTarg,X,Walls) ; move_right(XTarg,X,Walls); move_up(YTarg,Y,Walls); move_down(YTarg,Y,Walls).
 move_left(PLAYER_NUMBER, Positions, XTarg, X, Y,Walls):- XTarg is X-1, no_walls_x(X,Y,Walls).
@@ -136,4 +136,8 @@ evaluate(PlayePos,Walls,[NW1,NW2,NW3,NW4], evaluation):- .
 -The current player
 -All other participants (as one entity)
 */
-%alpha_beta(Eval, Alpha, Beta, Depth):- .
+alpha_beta(Eval, Alpha, Beta, Depth):- .
+	Depth < 30,
+	NewDepth is Depth + 1,
+	list_available_moves(Board, Player, Moves),
+	bounded_best(Player, Alpha, Beta, Moves, NextMove, Eval, NewDepth), !.
