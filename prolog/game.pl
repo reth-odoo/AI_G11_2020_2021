@@ -140,24 +140,58 @@ next_player_number(NB,NewNB):- NB>=0, NB<3, NewNB is NB+1.
 
 
 
-%choose_evaluation Jeremy
+%choose_evaluation Jeremie
 /*evaluation should represent the utility of a certain state for:
 -The current player
 -All other participants (as one entity -> just sum or more complex?)*/
 
-%evaluate(PlayePos,Walls,[NW1,NW2,NW3,NW4], evaluation):- .
+evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal pos ?*/, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
+    nth0(PLAYER_NUMBER, Positions, PlayerPos),
+    evaluate_min_distance(PlayerPos, [G1,G2,G3,G4], MinPDistance), /*Min goal distance for current player */
+    findall(Distance, (
+        member(ENTITY,[1,2,3,4]),
+        ENTITY \= PLAYER_NUMBER,
+        nth0(ENTITY, Positions, EntityPos),
+        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], Distance),
+    ), [D1,D2,D3,D4]]), /*All min distances for AI*/
+    MinEDistance is min(D1, min(D2, min(D3, D4))), /*Min goal distance for AI */
+    Eval is MinPDistance - MinEDistance. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
+
+    /*forall((member(ENTITY,[1,2,3,4]), ENTITY \= PLAYER_NUMBER), (
+        nth0(ENTITY, Positions, EntityPos),
+        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinEDistance),
+    ) )*/
+
+
+    
 /* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
 
 
 
-goal(1,X,Y):- Y is 8, on_board(X,Y).
-goal(2,X,Y):- X is 0, on_board(X,Y).
-goal(3,X,Y):- Y is 0, on_board(X,Y).
-goal(4,X,Y):- X is 8, on_board(X,Y).
+goal(1,X,Y):- Y is 8, on_board([X,Y]).
+goal(2,X,Y):- X is 0, on_board([X,Y]).
+goal(3,X,Y):- Y is 0, on_board([X,Y]).
+goal(4,X,Y):- X is 8, on_board([X,Y]).
 
-%evaluate_distance_from_goal(PLAYER_NUMBER).
+evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinDistance):-
+    evaluate_distance_from_goal(EntityPos, G1, D1), /*G1 == Goal 1 (Pos)*/
+    evaluate_distance_from_goal(EntityPos, G2, D2),
+    evaluate_distance_from_goal(EntityPos, G3, D3),
+    evaluate_distance_from_goal(EntityPos, G4, D4),
+    MinDistance is min(D1, min(D2, min(D3, D4))), /* Minimal distance between entity and one goal */
+
+evaluate_distance_from_goal([PX,PY], [GX,GY], Distance):- /*P == player,  G == goal*/
+    Distance is sqrt((GX-PX)^2 + (GY-PY)^2).
+
+evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Distance):-
+    nth0(PLAYER_NUMBER, Positions, [X1,Y1]), /*get player position */
+    nth0(GOAL_NUMBER, GoalsPos, [X2,Y2]), /* get goal position (this not work : goal(GOAL_NUMBER, X2, Y2)) */
+    Distance is sqrt((X2-X1)^2 + (Y2-Y1)^2). /* set distance to sqrt((X2-X1)² + (Y2-Y1)²). */
 
 
+
+
+%evaluate_distance_from_goal(1, [[1,2],[1,3],[2,4],[3,5]], 2, [[4,5],[3,8],[1,7],[3,0]], D).
 
 
 
