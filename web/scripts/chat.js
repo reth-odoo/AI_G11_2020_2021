@@ -7,8 +7,32 @@ function getInputBox() {
 }
 
 
-function getBotResponse() {
-    return "not connected"
+function getBotResponse(field, userInput) {
+    let oReq = new XMLHttpRequest();
+    oReq.overrideMimeType("application/json");
+    oReq.addEventListener('loadend', (event) => {
+        let resp_event = event.currentTarget;
+        if (resp_event.status != 200) {
+            field.nodeValue = `The server could not provide a response ${resp_event.status} ${oReq.response.message}`;
+            return;
+        }
+
+        let resp = resp_event.response;
+        if (resp.message) {
+            field.nodeValue = resp.message;
+            return;
+        }
+
+        field.nodeValue = 'The response did not contain a message';
+        return;
+
+    });
+
+    oReq.responseType = "json";
+    oReq.open("POST", "/chat");
+    oReq.setRequestHeader('Content-Type', 'application/json');
+    oReq.send(JSON.stringify({ message: userInput }));
+
 }
 
 function send() {
@@ -17,16 +41,35 @@ function send() {
 
         let userInput = inputBox.value;
         inputBox.value = "";
-        messages.push("<b>You</b>: " + userInput);
 
-        let botResponse = getBotResponse();
-        messages.push("<b>quoridabot</b>: " + botResponse);
+        //user message
+        let userLogP = document.createElement('p');
+        //bold
+        let idb = document.createElement('b');
+        let idText = document.createTextNode("You: ");
+        idb.appendChild(idText);
+        userLogP.appendChild(idb);
+        //message
+        let userLog = document.createTextNode(userInput);
+        userLogP.appendChild(userLog);
 
-        for (let i = 1; i < LOGNB; i++) {
-            if (messages[messages.length - i]) {
-                document.getElementById("log" + i).innerHTML = messages[messages.length - i];
-            }
-        }
+        //bot message
+        let botLogP = document.createElement('p');
+        //bold
+        idb = document.createElement('b');
+        idText = document.createTextNode("QuoridAi: ");
+        idb.appendChild(idText);
+        botLogP.appendChild(idb);
+        //message
+        let botLog = document.createTextNode("fetching...");
+        botLogP.appendChild(botLog);
+
+        getBotResponse(botLog, userInput);
+
+        let chatLog = document.getElementById("chatlog");
+        chatlog.appendChild(userLogP);
+        chatlog.appendChild(botLogP);
+        chatlog.scrollTop = chatlog.scrollHeight;
     }
 }
 
