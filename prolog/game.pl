@@ -41,7 +41,8 @@ player_separator(PLAYER_NUMBER, Positions, NWalls, PlayerNWalls, OtherNWalls, Pl
 
 
 /*check that the pawn is at a valid coordinate*/
-on_board([X,Y]):- X>0, X<9, Y>0, Y<9.
+board_coordinate(X):- member(X,[0,1,2,3,4,5,6,7,8]).
+on_board(X,Y):- board_coordinate(X),board_coordinate(Y).
 
 
 /*check that no two pawns are on the same space
@@ -64,8 +65,7 @@ pawn_on(X,Y,Positions):-member([X,Y],Positions).
 
 /*call all state validity check*/
 valid_position(Positions):- 
- forall(member(P, Positions),(on_board(P))), 
-
+ forall(member([X,Y], Positions),(on_board(X,Y))), 
  not_twice_pawn(Positions).
 
 
@@ -81,8 +81,8 @@ intersecting_walls(X1,Y1,'v',X2,Y2,'v'):- X1=X2, (Y1=Y2 ; Y1 is Y2-1 ; Y1 is Y2 
 intersecting_walls(X1,Y1,'v',X2,Y2,'h'):- X1=X2, Y1=Y2.
 intersecting_walls(X1,Y1,'h',X2,Y2,'v'):- intersecting_walls(X2,Y2,'v',X1,Y1,'h').
 
-valid_wall_placement(X1,Y1,'v'):- X1<7, Y1<8, X1>=0, Y1>=0.
-valid_wall_placement(X1,Y1,'h'):- X1<8, Y1<7, X1>=0, Y1>=0.
+valid_wall_placement(X1,Y1,'v'):- on_board(X1,Y1), X1<6, Y1<7, X1>=0, Y1>=0.
+valid_wall_placement(X1,Y1,'h'):- on_board(X1,Y1), X1<7, Y1<6, X1>=0, Y1>=0.
 
 
 %at_least_one_path(P,Goal):-.
@@ -95,7 +95,10 @@ wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
                                 (valid_wall_placement(X1,Y2,'v'),
                                 not(intersecting_walls(X1,Y1,'v',X2,Y2,Orientation)))
                             ).
-
+wall_ok(X1,Y1,'h', Walls):-  forall(member([X2,Y2,Orientation],Walls),
+                                (valid_wall_placement(X1,Y2,'h'),
+                                not(intersecting_walls(X1,Y1,'h',X2,Y2,Orientation)))
+                            ).
 
 
 
@@ -103,7 +106,7 @@ wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
 no_walls_x(XTarg,XOrig,Y,Walls):-forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; member([X,Y2,'v'],Walls)))
                             , (biggest_of_2(XTarg,XOrig,BigX,SmallX), (BigX =< X ; SmallX > X))).
 
-no_walls_x(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
+no_walls_y(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
                             , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY =< Y ; SmallY > Y))).
 
 
@@ -115,17 +118,18 @@ no_walls_x(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; 
 
 /*true if you can move one space in any cardinal direction*/
 move_one(Positions, XTarg, YTarg, X, Y, Walls):- 
-on_board(XTarg,YTarg), not(pawn_on(XTarg,YTarg,Positions))
+on_board(XTarg,YTarg), not(pawn_on(XTarg,YTarg,Positions)),
 (
-    move_left(XTarg,X,Walls); 
-    move_right(XTarg,X,Walls); 
-    move_up(YTarg,Y,Walls); 
-    move_down(YTarg,Y,Walls)
+    (move_left(XTarg,X,Y,Walls),YTarg=Y); 
+    (move_right(XTarg,X,Y,Walls),YTarg=Y); 
+    (move_up(YTarg,X,Y,Walls),XTarg=X);
+    (move_down(YTarg,X,Y,Walls),XTarg=X)
 ).
-move_left(Positions, XTarg, X, Y,Walls):- XTarg is X-1, no_walls_x(XTarg, X,Y,Walls).
-move_up(Positions, YTarg, X, Y,Walls):- YTarg is Y+1, no_walls_y(YTarg, Y,X,Walls).
-move_right(Positions, XTarg, X, Y,Walls):- XTarg is X+1, no_walls_x(XTarg, X,Y,Walls).
-move_down(Positions, YTarg, X, Y,Walls):- YTarg is Y-1, no_walls_y(YTarg, Y,X,Walls).
+
+move_left(XTarg, X, Y,Walls):- XTarg is X-1, no_walls_x(XTarg, X,Y,Walls).
+move_up(YTarg, X, Y,Walls):- YTarg is Y+1, no_walls_y(YTarg, Y,X,Walls).
+move_right(XTarg, X, Y,Walls):- XTarg is X+1, no_walls_x(XTarg, X,Y,Walls).
+move_down(YTarg, X, Y,Walls):- YTarg is Y-1, no_walls_y(YTarg, Y,X,Walls).
 
 
 move_diagonal(Positions,XTarg,YTarg,X,Y,Walls):-
@@ -137,33 +141,30 @@ diagonal_up_right(Positions,XTarg,YTarg,X,Y,Walls)
 
 /*can't move nor jump to right or up, but can move to the space from the other pawn's space*/
 diagonal_up_right(Positions,X,Y,NewX,NewY,Walls):- 
-X2 is X+2, Y2 is Y+2, X1 is X+1, Y1 is Y+1,
+X2 is X+2, Y2 is Y+2, X1 is X+1, Y1 is Y+1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_up(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_right(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
 diagonal_up_left(Positions,X,Y,NewX,NewY,Walls):- 
-X2 is X-2, Y2 is Y+2, X1 is X-1, Y1 is Y+1,
+X2 is X-2, Y2 is Y+2, X1 is X-1, Y1 is Y+1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_up(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_right(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
 diagonal_down_right(Positions,X,Y,NewX,NewY,Walls):- 
-X2 is X+2, Y2 is Y-2, X1 is X+1, Y1 is Y-1,
+X2 is X+2, Y2 is Y-2, X1 is X+1, Y1 is Y-1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_up(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_right(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
 diagonal_down_left(Positions,X,Y,NewX,NewY,Walls):- 
-X2 is X-2, Y2 is Y-2, X1 is X-1, Y1 is Y-1,
+X2 is X-2, Y2 is Y-2, X1 is X-1, Y1 is Y-1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_up(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_right(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
 
-
-/*move_diag(XTarg,YTarg,X,Y,Walls):- (move_left;move_right),(move_up,move_down),...
-move_diag(XTarg,Ytarg,X,Y,Walls):- (move_left;move_right),(move_up;move_down).*/
 
 /*check if the space between start position and target position is a player and there is no wall behind it*/
 jump_over(Positions,XTarg,YTarg,X,Y,Walls):- 
@@ -173,20 +174,21 @@ jump_over_top(Positions, XTarg,YTarg,X,Y,Walls);
 jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls)
 .
 /*is 2 away in that direction, pawn next to current pawn in that direction, can move one from that space.*/
-jump_over_right(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X+2, X1 is X+1, pawn_on(X1,Y,Positions), move_right(Positions, XTarg,YTarg,X1,Y,Walls).
-jump_over_left(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X-2, X1 is X-1, pawn_on(X1,Y,Positions), move_left(Positions, XTarg,YTarg,X1,Y,Walls).
-jump_over_top(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y-2, Y1 is Y-1, pawn_on(X,Y1,Positions), move_up(Positions, XTarg,YTarg,X,Y1,Walls).
-jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y+2, X1 is Y+1, pawn_on(X,Y1,Positions), move_down(Positions, XTarg,YTarg,X,Y1,Walls).
+jump_over_right(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X+2, X1 is X+1, pawn_on(X1,Y,Positions), move_right(XTarg,YTarg,X1,Y,Walls).
+jump_over_left(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X-2, X1 is X-1, pawn_on(X1,Y,Positions), move_left(XTarg,YTarg,X1,Y,Walls).
+jump_over_top(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y-2, Y1 is Y-1, pawn_on(X,Y1,Positions), move_up(XTarg,YTarg,X,Y1,Walls).
+jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y+2, Y1 is Y+1, pawn_on(X,Y1,Positions), move_down(XTarg,YTarg,X,Y1,Walls).
 
 
 move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions):- 
 nth1(PLAYER_NUMBER, Positions, [X,Y], OPos),
 (
     move_one(Positions, XTarg, YTarg, X, Y, Walls);
-    jump_over(); 
-    move_diag()
+    jump_over(Positions, XTarg,YTarg, X, Y, Walls); 
+    move_diagonal(Positions, XTarg,YTarg, X, Y, Walls)
 ),
-insertAfter(PLAYER_NUMBER,Opos,[XTarg,YTarg],NewPositions).
+valid_position(NewPositions),
+insertAfter(PLAYER_NUMBER,OPos,[XTarg,YTarg],NewPositions).
 
 /*wall placement*/
 
@@ -209,17 +211,15 @@ nth1(PNB,NWalls,PNWalls,ONWalls), PNWalls>0, NewPNWalls is PNWalls-1, insertAfte
 next_player_number(3,0).
 next_player_number(NB,NewNB):- NB>=0, NB<3, NewNB is NB+1.
 
-
-possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls):- 
 /*the game has to not be over*/
+possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls):- 
 forall(member(PNB,[1,2,3,4]), not(player_has_goal(PNB,Positions))),
 next_player_number(PLAYER_NUMBER,NewPlayerNumber),
-/*all moves*/
 (
-    place_wall(PLAYER_NUMBER,X,Y,'v', Walls, NWalls, NewWalls, NewNWalls), NewPositions = Positions) 
+    (place_wall(PLAYER_NUMBER, X, Y, 'v', Walls, NWalls, NewWalls, NewNWalls), NewPositions = Positions)
     ;
-    move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions)  
-).
+    (move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions), NewWalls = Walls, NewNWalls = NWalls) 
+), Move is 1.
 
 
 
@@ -254,10 +254,10 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal p
 
 
 
-goal(1,X,Y):- Y is 8, on_board([X,Y]).
-goal(2,X,Y):- X is 0, on_board([X,Y]).
-goal(3,X,Y):- Y is 0, on_board([X,Y]).
-goal(4,X,Y):- X is 8, on_board([X,Y]).
+goal(1,X,Y):- Y is 8, on_board(X,Y).
+goal(2,X,Y):- X is 0, on_board(X,Y).
+goal(3,X,Y):- Y is 0, on_board(X,Y).
+goal(4,X,Y):- X is 8, on_board(X,Y).
 
 player_has_goal(PNB,Positions):-nth1(PNB,Positions,[X,Y],_),goal(PNB,X,Y).
 player_has_goal()
@@ -306,8 +306,8 @@ find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Dept
 
 
 /*if only one move, best move*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWaals] [Move], Eval, Depth) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, Move, Eval, Depth), !.    
+best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWaals], [Move], Eval, Depth) :-
+    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, Depth), !.    
 /*else do minimax to get best value, compare to best value for other states*/
 best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWaals], [Move|Moves] , Depth, BestPNB, BestPos, BestWalls, BestMove, BestEval) :-
     minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval1, Depth),
@@ -315,10 +315,10 @@ best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWal
     best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, Move, Eval1, PlayerNB2, Pos2, Walls2, Move2, Eval2, BestPNB, BestPos, BestWalls, BestMove, BestEval).
 
 
+    /*if player has reached the goal, we don't care about values*/
 best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _, _, Eval2, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1):-
     /*Adjust because PLAYER_NUMBER reflects the number in the new state, not the player for whome we evaluate the move*/
-    next_player_number(CurrentPNB, PLAYER_NUMBER)
-    /*if player has reached the goal, we don't care about values*/
+    next_player_number(CurrentPNB, PLAYER_NUMBER),
     (
     (player_has_goal(OGPNB,Positions))
     ;
