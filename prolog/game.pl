@@ -179,6 +179,13 @@ jump_over_left(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X-2, X1 is X-1, pawn_
 jump_over_top(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y-2, Y1 is Y-1, pawn_on(X,Y1,Positions), move_one(Positions,XTarg,YTarg,X,Y1,Walls).
 jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y+2, Y1 is Y+1, pawn_on(X,Y1,Positions), move_one(Positions,XTarg,YTarg,X,Y1,Walls).
 
+/*
+Other Jump implem
+jump_over_right(Positions, XTarg,X,Y,Walls):-XTarg is X1+1, X1 is X+1,valid_position(XTarg,Y),no_walls_x(X1,X,Y,Walls),no_walls_x(XTarg,X1,Y,Walls).
+jump_over_left(Positions, XTarg,X,Y,Walls):-XTarg is X1-1, X1 is X-1,valid_position(XTarg,Y),no_walls_x(X1,X,Y,Walls),no_walls_x(XTarg,X1,Y,Walls).
+jump_over_down(Positions, YTarg,X,Y,Walls):-YTarg is Y1-1, Y1 is Y-1,valid_position(X,YTarg),no_walls_x(Y1,Y,X,Walls),no_walls_x(YTarg,Y1,X,Walls).
+jump_over_up(Positions, YTarg,X,Y,Walls):-YTarg is Y1+1, Y1 is Y+1,valid_position(X,YTarg),no_walls_x(Y1,Y,X,Walls),no_walls_x(YTarg,Y1,X,Walls).
+*/
 
 move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions):- 
 nth1(PLAYER_NUMBER, Positions, [X,Y], OPos),
