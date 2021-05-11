@@ -140,29 +140,29 @@ diagonal_up_right(Positions,XTarg,YTarg,X,Y,Walls)
 .
 
 /*can't move nor jump to right or up, but can move to the space from the other pawn's space*/
-diagonal_up_right(Positions,X,Y,NewX,NewY,Walls):- 
+diagonal_up_right(Positions,NewX,NewY,X,Y,Walls):- 
 X2 is X+2, Y2 is Y+2, X1 is X+1, Y1 is Y+1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y,Positions),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1,Positions),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
-diagonal_up_left(Positions,X,Y,NewX,NewY,Walls):- 
+diagonal_up_left(Positions,NewX,NewY,X,Y,Walls):- 
 X2 is X-2, Y2 is Y+2, X1 is X-1, Y1 is Y+1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y,Positions),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1,Positions),not(jump_over_top(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
-diagonal_down_right(Positions,X,Y,NewX,NewY,Walls):- 
+diagonal_down_right(Positions,NewX,NewY,X,Y,Walls):- 
 X2 is X+2, Y2 is Y-2, X1 is X+1, Y1 is Y-1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y,Positions),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1,Positions),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
-diagonal_down_left(Positions,X,Y,NewX,NewY,Walls):- 
+diagonal_down_left(Positions,,NewX,NewY,X,Y,Walls):- 
 X2 is X-2, Y2 is Y-2, X1 is X-1, Y1 is Y-1, NewX = X1, NewY = Y1,
 (
-    (pawn_on(X1,Y),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
-    (pawn_on(X,Y1),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
+    (pawn_on(X1,Y,Positions),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
+    (pawn_on(X,Y1,Positions),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
 
 
@@ -174,10 +174,10 @@ jump_over_top(Positions, XTarg,YTarg,X,Y,Walls);
 jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls)
 .
 /*is 2 away in that direction, pawn next to current pawn in that direction, can move one from that space.*/
-jump_over_right(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X+2, X1 is X+1, pawn_on(X1,Y,Positions), move_right(XTarg,YTarg,X1,Y,Walls).
-jump_over_left(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X-2, X1 is X-1, pawn_on(X1,Y,Positions), move_left(XTarg,YTarg,X1,Y,Walls).
-jump_over_top(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y-2, Y1 is Y-1, pawn_on(X,Y1,Positions), move_up(XTarg,YTarg,X,Y1,Walls).
-jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y+2, Y1 is Y+1, pawn_on(X,Y1,Positions), move_down(XTarg,YTarg,X,Y1,Walls).
+jump_over_right(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X+2, X1 is X+1, pawn_on(X1,Y,Positions), move_one(Positions,XTarg,YTarg,X1,Y,Walls).
+jump_over_left(Positions, XTarg,YTarg,X,Y,Walls):-XTarg is X-2, X1 is X-1, pawn_on(X1,Y,Positions), move_one(Positions,XTarg,YTarg,X1,Y,Walls).
+jump_over_top(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y-2, Y1 is Y-1, pawn_on(X,Y1,Positions), move_one(Positions,XTarg,YTarg,X,Y1,Walls).
+jump_over_bottom(Positions, XTarg,YTarg,X,Y,Walls):-YTarg is Y+2, Y1 is Y+1, pawn_on(X,Y1,Positions), move_one(Positions,XTarg,YTarg,X,Y1,Walls).
 
 
 move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions):- 
