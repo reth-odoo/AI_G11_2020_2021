@@ -10,11 +10,13 @@ biggest_of_2(X,Y,X,Y):- X>Y.
 biggest_of_2(X,Y,Y,X):- Y>X.
 
 /*insert in a list, 1 is the first element*/
-insertAfter(1,[],X,[X]).
-insertAfter(1,[L],X,[L,X]).
-insertAfter(1,[L|OL],X,[L,X|OL]).
-insertAfter(N,[L1|L],X,[L1|NL]):- N>0, NN is N-1, insertAfter(NN,L,X,NL).
 
+insertBefore(1,[],X,[X]).
+insertBefore(1,[L|OL],X,[X,L|OL]).
+insertBefore(N,[L|OL],X,[L|NL]):- NN is N-1, insertBefore(NN,OL,X,NL).
+
+insertAfter([],X,[X]).
+insertAfter([L|OL],X,[L|FL]):- insertAfter(OL,X,FL).
 
 
 /*DATA Representation
@@ -90,14 +92,14 @@ valid_wall_placement(X1,Y1,'h'):- on_board(X1,Y1), X1<7, Y1<6, X1>=0, Y1>=0.
 %path_find(X1,Y1,X2,Y2):-X1=X2,Y1=Y2.
 %path_find(X1,Y1,X2,Y2):-move_one(X1,Y1,X3,Y3),path_find(X3,Y3,X2,Y2).
 
-
-wall_ok(X1,Y1,'v', Walls):-  forall(member([X2,Y2,Orientation],Walls),
-                                (valid_wall_placement(X1,Y2,'v'),
-                                not(intersecting_walls(X1,Y1,'v',X2,Y2,Orientation)))
+/*for all Walls, the one abov*/
+wall_ok(X1,Y1,'v', Walls):- valid_wall_placement(X1,Y1,'v'),
+                            forall(member([X2,Y2,Orientation],Walls),
+                                (not(intersecting_walls(X1,Y1,'v',X2,Y2,Orientation)))
                             ).
-wall_ok(X1,Y1,'h', Walls):-  forall(member([X2,Y2,Orientation],Walls),
-                                (valid_wall_placement(X1,Y2,'h'),
-                                not(intersecting_walls(X1,Y1,'h',X2,Y2,Orientation)))
+wall_ok(X1,Y1,'h', Walls):- valid_wall_placement(X1,Y1,'h'), 
+                            forall(member([X2,Y2,Orientation],Walls),
+                                (not(intersecting_walls(X1,Y1,'h',X2,Y2,Orientation)))
                             ).
 
 
@@ -158,7 +160,7 @@ X2 is X+2, Y2 is Y-2, X1 is X+1, Y1 is Y-1, NewX = X1, NewY = Y1,
     (pawn_on(X1,Y,Positions),not(jump_over_right(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
     (pawn_on(X,Y1,Positions),not(jump_over_bottom(Positions, X, Y2, X, Y, Walls)), move_one(Positions, X1, Y1, X, Y1, Walls))
 ).
-diagonal_down_left(Positions,,NewX,NewY,X,Y,Walls):- 
+diagonal_down_left(Positions,NewX,NewY,X,Y,Walls):- 
 X2 is X-2, Y2 is Y-2, X1 is X-1, Y1 is Y-1, NewX = X1, NewY = Y1,
 (
     (pawn_on(X1,Y,Positions),not(jump_over_left(Positions, X2, Y, X, Y, Walls)), move_one(Positions, X1, Y1, X1, Y, Walls));
@@ -194,24 +196,23 @@ nth1(PLAYER_NUMBER, Positions, [X,Y], OPos),
     jump_over(Positions, XTarg,YTarg, X, Y, Walls); 
     move_diagonal(Positions, XTarg,YTarg, X, Y, Walls)
 ),
-valid_position(NewPositions),
-insertAfter(PLAYER_NUMBER,OPos,[XTarg,YTarg],NewPositions).
+insertBefore(PLAYER_NUMBER,OPos,[XTarg,YTarg],NewPositions),
+valid_position(NewPositions).
 
 /*wall placement*/
 
 /*Player can place wall such that the Walls list is as below if*/
-place_wall(PNB, X1,Y1,'v', Walls, NWalls, [Walls|[X1,Y1]], NewNWalls):- 
+place_wall(PNB, X1,Y1, Direction, Walls, NewWalls, NWalls, NewNWalls):-
 /*a wall can go there*/
-wall_ok(X1,Y1,'v', Walls),  
+wall_ok(X1,Y1,Direction, Walls),  
 /*player still has walls and compute new NWalls for them*/
-take_wall_from(PNB,NWalls,NewNWalls).
+take_wall_from(PNB,NWalls,NewNWalls),
+insertAfter(Walls, [X1,Y1], NewWalls).
 
-place_wall(PNB, X1,Y1,'h', Walls, NWalls, [Walls|[X1,Y1]], NewNWalls):- 
-wall_ok(X1,Y1,'h', Walls), take_wall_from(PNB,NWalls,NewNWalls).
 
 /*true if NewNWalls is the updated list of number of walls*/
 take_wall_from(PNB,NWalls,NewNWalls):-
-nth1(PNB,NWalls,PNWalls,ONWalls), PNWalls>0, NewPNWalls is PNWalls-1, insertAfter(PNB,ONWalls,NewPNWalls,NewNWalls).
+nth1(PNB,NWalls,PNWalls,ONWalls), PNWalls>0, NewPNWalls is PNWalls-1, insertBefore(PNB,ONWalls,NewPNWalls,NewNWalls).
 
 
 /*next player in turn*/
@@ -223,9 +224,9 @@ possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, Ne
 forall(member(PNB,[1,2,3,4]), not(player_has_goal(PNB,Positions))),
 next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 (
-    (place_wall(PLAYER_NUMBER, X, Y, 'v', Walls, NWalls, NewWalls, NewNWalls), NewPositions = Positions)
+    (place_wall(PLAYER_NUMBER, _, _, _, Walls, NewWalls, NWalls, NewNWalls), NewPositions = Positions)
     ;
-    (move(PLAYER_NUMBER, Positions, XTarg, YTarg, Walls, NewPositions), NewWalls = Walls, NewNWalls = NWalls) 
+    (move(PLAYER_NUMBER, Positions, _, _, Walls, NewPositions), NewWalls = Walls, NewNWalls = NWalls) 
 ), Move is 1.
 
 
