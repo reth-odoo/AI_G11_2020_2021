@@ -242,18 +242,24 @@ next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 -The current player
 -All other participants (as one entity -> just sum or more complex?)*/
 
-evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal pos ?*/, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
-    nth1(PLAYER_NUMBER, Positions, PlayerPos),
-    evaluate_min_distance(PlayerPos, [G1,G2,G3,G4], MinPDistance), /*Min goal distance for current player */
+evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], Walls, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
+    nth1(PLAYER_NUMBER, Positions, [PX,PY]), /*get current player position*/
+    goal(PLAYER_NUMBER, PGX, PGY),
+    (PGY = PY ; PGX = PX), /*vertical or horizontal ?*/
+    evaluate_real_distance([PX,PY], [PGX, PGY], Walls, Distance),
+    /*manhattanDistance(PX,PY,PGX,PGY,MinPDistance),*/ /*distance for current player */
     findall(Distance, (
         member(ENTITY,[1,2,3,4]),
         ENTITY \= PLAYER_NUMBER,
-        nth1(ENTITY, Positions, EntityPos),
-        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], Distance)
+        nth1(ENTITY, Positions, [EX,EY]),
+        goal(ENTITY, EGX, EGY),
+        (EGY = EY ; EGX = EX), /*vertical or horizontal ?*/
+        evaluate_real_distance([EX,EY], [EGX, EGY], Walls, Distance)
+        /*manhattanDistance(EX,EY,EGX,EGY,Distance)*/
     ), [D1,D2,D3]), /*All min distances for AI*/
     Min2 is min(D2, D3),
     MinEDistance is min(D1, Min2), /*Min goal distance for AI */
-    Eval is MinPDistance - MinEDistance. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
+    Eval is MinEDistance - MinPDistance, !. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
 
     /*forall((member(ENTITY,[1,2,3,4]), ENTITY \= PLAYER_NUMBER), (
         nth0(ENTITY, Positions, EntityPos),
@@ -264,7 +270,64 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal p
 
 
 /* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
+/*getDirection([X1,Y1], [X2,Y2], Direction):-
+    (
+        X1 != X2 -> Direction = 'h'; Direction = 'v'
+    ).*/
+    
+/* evaluate_real_distance([1,0], [2,1], [[0,1],[1,1],[2,0]], D).*/
+evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
+    findall(PATH, (
+            next_position(PlayerPos, RPATH, Walls, PATH),
+            last(PATH, Goal),
+            Goal = GoalPos
+        ),
+        PATHS
+    ),
+    findall(LENGTH, (
+            member(PATH, PATHS),
+            length(PATH, LENGTH)
+        ),
+        LENGTHS
+    ),
+    min_list(LENGTHS, Distance).
 
+/*path([0,0], [2,0], [[0,0]], [[1,0,'h'],[1,1,'v']], P).*/
+path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
+    ((last(RPATH, Goal),
+     append([],[GX,GY], Goal)) -> append([],FPATH, RPATH);
+    findall(PATH,
+        (next_position(PlayerPos, RPATH, Walls, PATH)),
+        PATHS
+    ),
+    findall(Distance, (
+            member(PATH, PATHS),
+            last(PATH, [PX, PY]),
+            manhattanDistance(PX,PY,GX,GY,Distance)
+        ),
+        Distances
+    ),
+    min_list(Distances, MinDistance),
+    nth0(Index, Distances, MinDistance),
+    nth0(Index, PATHS, NEPATH),
+    last(NEPATH, Pos),
+    path(Pos, [GX,GY], NEPATH, Walls, FPATH)).
+/*path(PlayerPos, [GX,GY], RPATH, Walls, RPATH).*/
+
+head([H,_], H).
+/*next_position([0,0], [[1,1],[0,1]], [], P).*/
+next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
+    on_board(X,Y),
+    abs(X-StartX, AbsX),
+    abs(Y-StartY, AbsY),
+    (
+        (AbsX is 1, AbsY is 0);
+        (AbsX is 0, AbsY is 1)
+    ),
+    (AbsX = 1 -> Direction = 'h' ; Direction = 'v'),
+    \+ member([X,Y, Direction ], Walls),
+    \+ member([X,Y], CURRENT_PATH),
+    append(CURRENT_PATH, [[X,Y]], NEW_PATH).
 
 
 goal(1,X,Y):- Y is 8, on_board(X,Y).
