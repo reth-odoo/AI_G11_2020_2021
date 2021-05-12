@@ -19,6 +19,9 @@ insertAfter([],X,[X]).
 insertAfter([L|OL],X,[L|FL]):- insertAfter(OL,X,FL).
 
 
+manhattanDistance(X1,Y1,X2,Y2,D):- DX is X2-X1, DY is Y2-Y1, D is abs(DX)+abs(DY).
+
+
 /*DATA Representation
 NWaals = [NWaals1, NWaals2, NWalls3, NWaals4]
 
@@ -269,9 +272,9 @@ goal(2,X,Y):- X is 0, on_board(X,Y).
 goal(3,X,Y):- Y is 0, on_board(X,Y).
 goal(4,X,Y):- X is 8, on_board(X,Y).
 
-player_has_goal(PNB,Positions):-nth1(PNB,Positions,[X,Y],_),goal(PNB,X,Y).
-player_has_goal()
-other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX1,AY1]|[AX2|AY2]|[AX3|AY3]]),nth1(PNB,[1,2,3,4],_,[A|B|C]),
+player_has_goal(PNB,Positions):-nth1(PNB,Positions,[X,Y]),goal(PNB,X,Y).
+
+other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX1,AY1],[AX2,AY2],[AX3,AY3]]),nth1(PNB,[1,2,3,4],_,[A,B,C]),
 (goal(A,AX1,AX2);goal(C,CX1,CX2);goal(C,CX1,CX2)).
 
 evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinDistance):-
@@ -301,7 +304,7 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 
 
 /*at max depth, just evaluate*/
-minmax(_, _, Positions, Walls, NWalls, NextMove, U, 0):- U is 1. %evaluate(PLAYER_NUMBER, State, U).
+minmax(_, _, Positions, Walls, NWalls, NextMove, U, 0):- U is 1. %evaluate(PLAYER_NUMBER, Positions, NWalls, [G1,G2,G3,G4], U).
 
 /*go down one in depth and find best utility/move starting from this state*/
 minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWaals, NextMove, U, Depth):-  D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NextMove, U, D2).
