@@ -246,9 +246,9 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal p
         member(ENTITY,[1,2,3,4]),
         ENTITY \= PLAYER_NUMBER,
         nth0(ENTITY, Positions, EntityPos),
-        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], Distance),
-    ), [D1,D2,D3,D4]]), /*All min distances for AI*/
-    MinEDistance is min(D1, min(D2, min(D3, D4))), /*Min goal distance for AI */
+        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], Distance)
+    ), result), /*All min distances for AI*/
+    MinEDistance is min(result), /*Min goal distance for AI */
     Eval is MinPDistance - MinEDistance. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
 
     /*forall((member(ENTITY,[1,2,3,4]), ENTITY \= PLAYER_NUMBER), (
@@ -277,7 +277,9 @@ evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinDistance):-
     evaluate_distance_from_goal(EntityPos, G2, D2),
     evaluate_distance_from_goal(EntityPos, G3, D3),
     evaluate_distance_from_goal(EntityPos, G4, D4),
-    MinDistance is min(D1, min(D2, min(D3, D4))), /* Minimal distance between entity and one goal */
+    Min1 is min(D3, D4),
+    Min2 is min(D2, Min1),
+    MinDistance is min(D1, Min2). /* Minimal distance between entity and one goal */
 
 evaluate_distance_from_goal([PX,PY], [GX,GY], Distance):- /*P == player,  G == goal*/
     Distance is sqrt((GX-PX)^2 + (GY-PY)^2).
