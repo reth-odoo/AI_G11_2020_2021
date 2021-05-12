@@ -240,15 +240,16 @@ next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 -All other participants (as one entity -> just sum or more complex?)*/
 
 evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal pos ?*/, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
-    nth0(PLAYER_NUMBER, Positions, PlayerPos),
+    nth1(PLAYER_NUMBER, Positions, PlayerPos),
     evaluate_min_distance(PlayerPos, [G1,G2,G3,G4], MinPDistance), /*Min goal distance for current player */
     findall(Distance, (
         member(ENTITY,[1,2,3,4]),
         ENTITY \= PLAYER_NUMBER,
-        nth0(ENTITY, Positions, EntityPos),
+        nth1(ENTITY, Positions, EntityPos),
         evaluate_min_distance(EntityPos, [G1,G2,G3,G4], Distance)
-    ), result), /*All min distances for AI*/
-    MinEDistance is min(result), /*Min goal distance for AI */
+    ), [D1,D2,D3]), /*All min distances for AI*/
+    Min2 is min(D2, D3),
+    MinEDistance is min(D1, Min2), /*Min goal distance for AI */
     Eval is MinPDistance - MinEDistance. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
 
     /*forall((member(ENTITY,[1,2,3,4]), ENTITY \= PLAYER_NUMBER), (
@@ -256,8 +257,9 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], [G1,G2,G3,G4] /*Need goal p
         evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinEDistance),
     ) )*/
 
+/*evaluate(1, [[1,3],[2,4],[3,5],[8,0]], [4,4,4,4], [[1,5], [3,4], [4,8], [7,2]], Eval).*/
 
-    
+
 /* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
 
 
