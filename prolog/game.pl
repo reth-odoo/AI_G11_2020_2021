@@ -2,6 +2,10 @@
 The program just needs to be able to make a decision based on the state of the game
 */
 
+parse_pawn_move(L):-split_string(L," "," ",["move",SN1,SN2]),number_string(N1,SN1),number_string(N2,SN2).
+parse_place_wall(L):-split_string(L," "," ",["wall",SN1,SN2,"v"]),number_string(N1,SN1),number_string(N2,SN2).
+parse_place_wall(L):-split_string(L," "," ",["wall",SN1,SN2,"h"]),number_string(N1,SN1),number_string(N2,SN2).
+parse_move(L):-parse_pawn_move(L);parse_place_wall(L).
 
 /*UTILITY*/
 
@@ -20,6 +24,12 @@ insertAfter([L|OL],X,[L|FL]):- insertAfter(OL,X,FL).
 
 
 manhattanDistance(X1,Y1,X2,Y2,D):- DX is X2-X1, DY is Y2-Y1, D is abs(DX)+abs(DY).
+
+unzip_3([[A,B,C]],[A],[B],[C]).
+unzip_3([[A,B,C]|L],[A|X],[B|Y],[C|Z]):- unzip_3(L,X,Y,Z).
+
+unzip_4([[A,B,C,D]],[A],[B],[C],[D]).
+unzip_4([[A,B,C,D]|L],[A|W],[B|X],[C|Y],[D|Z]):- unzip_4(L,W,X,Y,Z).
 
 
 /*DATA Representation
@@ -79,6 +89,7 @@ valid_position(Positions):-
 
 /*Walls placement*/
 
+valid_NWalls(NWalls):-forall(member(N,Nwalls), member(N,[0,1,2,3,4,5])).
 
 
 intersecting_walls(X1,Y1,'h',X2,Y2,'h'):- Y1=Y2, (X1=X2 ; X1 is X2-1 ; X1 is X2 + 1).
@@ -86,8 +97,8 @@ intersecting_walls(X1,Y1,'v',X2,Y2,'v'):- X1=X2, (Y1=Y2 ; Y1 is Y2-1 ; Y1 is Y2 
 intersecting_walls(X1,Y1,'v',X2,Y2,'h'):- X1=X2, Y1=Y2.
 intersecting_walls(X1,Y1,'h',X2,Y2,'v'):- intersecting_walls(X2,Y2,'v',X1,Y1,'h').
 
-valid_wall_placement(X1,Y1,'v'):- on_board(X1,Y1), X1<6, Y1<7, X1>=0, Y1>=0.
-valid_wall_placement(X1,Y1,'h'):- on_board(X1,Y1), X1<7, Y1<6, X1>=0, Y1>=0.
+valid_wall_placement(X1,Y1,'v'):- on_board(X1,Y1),X1=5,X2=5.% X1<6, Y1<7, X1>=0, Y1>=0.
+valid_wall_placement(X1,Y1,'h'):- on_board(X1,Y1),X1=2,X2=2.% X1<7, Y1<6, X1>=0, Y1>=0.
 
 
 %at_least_one_path(P,Goal):-.
@@ -105,13 +116,21 @@ wall_ok(X1,Y1,'h', Walls):- valid_wall_placement(X1,Y1,'h'),
                                 (not(intersecting_walls(X1,Y1,'h',X2,Y2,Orientation)))
                             ).
 
+walls_ok(Walls):- forall(
+    member([X,Y,D],Walls),
+    forall(
+        (member([X1,Y1,D1],Walls),(X1\=X;Y1\=Y;D\=D1)),
+        (not(intersecting_walls(X,Y,D,X1,Y1,D1),valid_wall_placement(X1,Y1,D1),valid_wall_placement(X,Y,D)))
+        )
+    ).
+
 
 
 /*for all walls starting on this Y or the level above, check that X not between the coordinates*/
-no_walls_x(XTarg,XOrig,Y,Walls):-forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; member([X,Y2,'v'],Walls)))
+no_walls_x(XTarg,XOrig,Y,Walls):-on_board(XTarg,Y),on_board(XOrig,Y),forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; member([X,Y2,'v'],Walls)))
                             , (biggest_of_2(XTarg,XOrig,BigX,SmallX), (BigX =< X ; SmallX > X))).
 
-no_walls_y(YTarg,YOrig,X,Walls):-forall((X2 is X-1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
+no_walls_y(YTarg,YOrig,X,Walls):-on_board(X,YTarg),on_board(X,YOrig),forall((X2 is X+1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
                             , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY =< Y ; SmallY > Y))).
 
 
@@ -205,7 +224,7 @@ valid_position(NewPositions).
 /*wall placement*/
 
 /*Player can place wall such that the Walls list is as below if*/
-place_wall(PNB, X1,Y1, Direction, Walls, NewWalls, NWalls, NewNWalls):-
+place_wall(PNB, X1,Y1, Direction, Walls, NWalls, NewWalls, NewNWalls):-
 /*a wall can go there*/
 wall_ok(X1,Y1,Direction, Walls),  
 /*player still has walls and compute new NWalls for them*/
@@ -215,26 +234,35 @@ insertAfter(Walls, [X1,Y1,Direction], NewWalls).
 
 /*true if NewNWalls is the updated list of number of walls*/
 take_wall_from(PNB,NWalls,NewNWalls):-
-nth1(PNB,NWalls,PNWalls,ONWalls), PNWalls>0, NewPNWalls is PNWalls-1, insertBefore(PNB,ONWalls,NewPNWalls,NewNWalls).
+nth1(PNB,NWalls,PNWalls,ONWalls), member(PNWalls,[1,2,3,4,5]), NewPNWalls is PNWalls-1, insertBefore(PNB,ONWalls,NewPNWalls,NewNWalls).
 
 
 /*next player in turn*/
-next_player_number(3,0).
-next_player_number(NB,NewNB):- NB>=0, NB<3, NewNB is NB+1.
+
+/*enumerated so it can go both ways*/
+next_player_number(4,1).
+next_player_number(3,4).
+next_player_number(2,3).
+next_player_number(1,2).
+/*next_player_number(NB,NewNB):- NB>=0, NB<4, NewNB is NB+1.*/
 
 /*the game has to not be over*/
 
 /*use format(atom(Result),'~s ~d ~d', ['move', X, Y]). to get a String for Move*/
-possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls):- 
+possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls):-
+walls_ok(Walls),
+valid_position(Positions),
+valid_NWalls(NWalls),
 forall(member(PNB,[1,2,3,4]), not(player_has_goal(PNB,Positions))),
 next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 (
-    (place_wall(PLAYER_NUMBER, X, Y, D, Walls, NewWalls, NWalls, NewNWalls), NewPositions = Positions, format(atom(Move),'~s ~d ~d ~s', ['wall', X, Y, D]))
+    (place_wall(PLAYER_NUMBER, X, Y, D, Walls, NWalls, NewWalls, NewNWalls), NewPositions = Positions, format(atom(Move),'~s ~d ~d ~s', ['wall', X, Y, D]))
     ;
     (move(PLAYER_NUMBER, Positions, X, Y, Walls, NewPositions), NewWalls = Walls, NewNWalls = NWalls, format(atom(Move),'~s ~d ~d', ['move', X, Y]))
-).
-
-
+),
+walls_ok(NewWalls),
+valid_position(NewPositions),
+valid_NWalls(NewNWalls).
 
 
 
@@ -312,32 +340,32 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 minmax(_, _, Positions, Walls, NWalls, NextMove, U, 0):- U is 1. %evaluate(PLAYER_NUMBER, Positions, NWalls, [G1,G2,G3,G4], U).
 
 /*go down one in depth and find best utility/move starting from this state*/
-minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):-  D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
+minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):-  Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
 
 find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- 
     /*get all possible states from current state*/
-    findall(NewPositions, possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), PositionsList),
-    findall(NewWalls, possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), WallsList),
-    findall(NewNWalls, possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), NWallsList),
-    findall(Move, possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), MoveList),
+    findall([NewPositions,NewNWalls,NewWalls,Move], 
+    possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), 
+    NewList),
+    unzip_4(NewList,PositionsList,WallsList,NWallsList,MoveList),
     next_player_number(PLAYER_NUMBER, NewPlayerNumber),
     /*pick max from these states*/
-    best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPNB, NextPositions, NextWalls, NextMove, Eval), !.
+    best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPositions, NextWalls, NextNWalls, NextMove, Eval), !.
 
 
 /*if only one move, best move*/
 best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWaals], [Move], Depth, Positions, Walls, Nwalls, Move, Eval) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, Depth), !.    
+    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, Depth), !.
 /*else do minimax to get best value, compare to best value for other states*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWaals], [Move|Moves] , Depth, BestPNB, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval1, Depth),
-    max_state(PLAYER_NUMBER, OtherPos, OtherWalls, Move, PlayerNB2, Pos2, Walls2, Move2, Eval2),
-    best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, PlayerNB2, Pos2, Walls2, NWalls2, Move2, Eval2, BestPNB, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
+best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWaals], [Move|Moves], Depth, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
+    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, _, Eval1, Depth),
+    best_state(OGPNB, PLAYER_NUMBER, OtherPos, OtherWalls, OtherNWalls, Moves, Depth, Pos2, Walls2, NWalls2, Move2, Eval2),
+    best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, PlayerNB2, Pos2, Walls2, NWalls2, Move2, Eval2, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
 
 
     /*if player has reached the goal, we don't care about values*/
-best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _, _, _, Eval2, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1):-
-    /*Adjust because PLAYER_NUMBER reflects the number in the new state, not the player for whome we evaluate the move*/
+best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _, _, Eval2, Positions, Walls, NWalls, Move, Eval1):-
+    /*Adjust because PLAYER_NUMBER reflects the number in the new state, not the player for whom we evaluate the move*/
     next_player_number(CurrentPNB, PLAYER_NUMBER),
     (
     (player_has_goal(OGPNB,Positions))
@@ -349,4 +377,4 @@ best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _
     Eval2 > Eval1)
     ). 
 /*if not the first, the second*/
-best_of_2(_,_, _, _, _, _, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval).
+best_of_2(_,_,_,_,_,_,_, Positions, Walls, NWalls, Move, Eval, Positions, Walls, NWalls, Move, Eval).
