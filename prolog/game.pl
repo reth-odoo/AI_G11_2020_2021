@@ -303,7 +303,7 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], Walls, Eval):- /*Some chang
 /* evaluate_real_distance([1,0], [2,1], [[0,1],[1,1],[2,0]], D).*/
 evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
     findall(PATH, (
-            next_position(PlayerPos, RPATH, Walls, PATH),
+            path(PlayerPos, GoalPos, [], Walls, PATH),
             last(PATH, Goal),
             Goal = GoalPos
         ),
@@ -325,7 +325,7 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
         (next_position(PlayerPos, RPATH, Walls, PATH)),
         PATHS
     ),
-    findall(Distance, (
+    /*findall(Distance, (
             member(PATH, PATHS),
             last(PATH, [PX, PY]),
             manhattanDistance(PX,PY,GX,GY,Distance)
@@ -333,7 +333,7 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
         Distances
     ),
     min_list(Distances, MinDistance),
-    nth0(Index, Distances, MinDistance),
+    nth0(Index, Distances, MinDistance),*/
     nth0(Index, PATHS, NEPATH),
     last(NEPATH, Pos),
     path(Pos, [GX,GY], NEPATH, Walls, FPATH)).
@@ -349,8 +349,10 @@ next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
         (AbsX is 1, AbsY is 0);
         (AbsX is 0, AbsY is 1)
     ),
-    (AbsX = 1 -> Direction = 'h' ; Direction = 'v'),
-    \+ member([X,Y, Direction ], Walls),
+    no_walls_x(X,StartX,Y,Walls),
+    no_walls_y(Y,StartY,X,Walls),
+    /*(AbsX = 1 -> Direction = 'h' ; Direction = 'v'),
+    \+ member([X,Y, Direction ], Walls),*/
     \+ member([X,Y], CURRENT_PATH),
     append(CURRENT_PATH, [[X,Y]], NEW_PATH).
 
