@@ -393,9 +393,8 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 /*TEMPORARY EVALUATION*/
 %temp_eval().
 
-
 /*at max depth, just evaluate*/
-minmax(_, _, Positions, Walls, NWalls, NextMove, U, 0):- U is 1. %evaluate(PLAYER_NUMBER, Positions, NWalls, [G1,G2,G3,G4], U).
+minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, 0):- evaluate(PLAYER_NUMBER, Positions, NWalls, Walls, U).
 
 /*go down one in depth and find best utility/move starting from this state*/
 minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):-  Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
@@ -412,14 +411,13 @@ find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Dept
 
 
 /*if only one move, best move*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWaals], [Move], Depth, Positions, Walls, Nwalls, Move, Eval) :-
+best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWalls], [Move], Depth, Positions, Walls, Nwalls, Move, Eval) :-
     minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, Depth), !.
 /*else do minimax to get best value, compare to best value for other states*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWaals], [Move|Moves], Depth, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
+best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWalls], [Move|Moves], Depth, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
     minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, _, Eval1, Depth),
     best_state(OGPNB, PLAYER_NUMBER, OtherPos, OtherWalls, OtherNWalls, Moves, Depth, Pos2, Walls2, NWalls2, Move2, Eval2),
-    spy(Eval1=Eval2),
-    best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, PlayerNB2, Pos2, Walls2, NWalls2, Move2, Eval2, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
+    best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, Pos2, Walls2, NWalls2, Move2, Eval2, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
 
 
     /*if player has reached the goal, we don't care about values*/
