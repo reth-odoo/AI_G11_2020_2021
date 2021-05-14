@@ -269,17 +269,13 @@ next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 
 evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], Walls, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
     nth1(PLAYER_NUMBER, Positions, [PX,PY]), /*get current player position*/
-    goal(PLAYER_NUMBER, PGX, PGY),
-    (PGY = PY ; PGX = PX), /*vertical or horizontal ?*/
-    evaluate_real_distance([PX,PY], [PGX, PGY], Walls, Distance),
+    evaluate_min_real_distance([PX,PY], PLAYER_NUMBER, Walls, MinPDistance),
     /*manhattanDistance(PX,PY,PGX,PGY,MinPDistance),*/ /*distance for current player */
     findall(Distance, (
         member(ENTITY,[1,2,3,4]),
         ENTITY \= PLAYER_NUMBER,
         nth1(ENTITY, Positions, [EX,EY]),
-        goal(ENTITY, EGX, EGY),
-        (EGY = EY ; EGX = EX), /*vertical or horizontal ?*/
-        evaluate_real_distance([EX,EY], [EGX, EGY], Walls, Distance)
+        evaluate_min_real_distance([EX,EY], ENTITY, Walls, Distance)
         /*manhattanDistance(EX,EY,EGX,EGY,Distance)*/
     ), [D1,D2,D3]), /*All min distances for AI*/
     Min2 is min(D2, D3),
@@ -291,7 +287,7 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], Walls, Eval):- /*Some chang
         evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinEDistance),
     ) )*/
 
-/*evaluate(1, [[1,3],[2,4],[3,5],[8,0]], [4,4,4,4], [[1,5], [3,4], [4,8], [7,2]], Eval).*/
+/*evaluate(1, [[1,3],[2,4],[3,5],[8,0]], [4,4,4,4], [[1,5,'v'], [3,4,'h'], [4,8,'v'], [7,2,'v']], Eval).*/
 
 
 /* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
@@ -300,10 +296,10 @@ evaluate(PLAYER_NUMBER, Positions,[NW1,NW2,NW3,NW4], Walls, Eval):- /*Some chang
         X1 != X2 -> Direction = 'h'; Direction = 'v'
     ).*/
     
-/* evaluate_real_distance([1,0], [2,1], [[0,1],[1,1],[2,0]], D).*/
+/* evaluate_real_distance([1,0], [2,1], [[0,1,'h'],[1,1,'v'],[2,0,'v']], D).*/
 evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
     findall(PATH, (
-            path(PlayerPos, GoalPos, [], Walls, PATH),
+            path(PlayerPos, GoalPos, [PlayerPos], Walls, PATH),
             last(PATH, Goal),
             Goal = GoalPos
         ),
@@ -317,7 +313,18 @@ evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
     ),
     min_list(LENGTHS, Distance).
 
+evaluate_min_real_distance([PX,PY], PLAYER_NUMBER, Walls, Distance):-
+    findall(RDistance, (
+            goal(PLAYER_NUMBER, PGX, PGY),
+            (PGY = PY ; PGX = PX),
+            evaluate_real_distance([PX,PY], [PGX,PGY], Walls, RDistance)
+        ),
+        Distances
+    ),
+    min_list(Distances, Distance).
+
 /*path([0,0], [2,0], [[0,0]], [[1,0,'h'],[1,1,'v']], P).*/
+/*path([1,0], [2,1], [[1,0]], [[0,1,'h'],[1,1,'v'],[2,0,'v']], D).*/
 path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
     ((last(RPATH, Goal),
      append([],[GX,GY], Goal)) -> append([],FPATH, RPATH);
@@ -325,7 +332,7 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
         (next_position(PlayerPos, RPATH, Walls, PATH)),
         PATHS
     ),
-    /*findall(Distance, (
+    findall(Distance, (
             member(PATH, PATHS),
             last(PATH, [PX, PY]),
             manhattanDistance(PX,PY,GX,GY,Distance)
@@ -333,7 +340,7 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
         Distances
     ),
     min_list(Distances, MinDistance),
-    nth0(Index, Distances, MinDistance),*/
+    nth0(Index, Distances, MinDistance),
     nth0(Index, PATHS, NEPATH),
     last(NEPATH, Pos),
     path(Pos, [GX,GY], NEPATH, Walls, FPATH)).
@@ -349,10 +356,8 @@ next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
         (AbsX is 1, AbsY is 0);
         (AbsX is 0, AbsY is 1)
     ),
-    no_walls_x(X,StartX,Y,Walls),
-    no_walls_y(Y,StartY,X,Walls),
-    /*(AbsX = 1 -> Direction = 'h' ; Direction = 'v'),
-    \+ member([X,Y, Direction ], Walls),*/
+    (AbsX = 0 -> no_walls_y(Y,StartY,X,Walls) ; no_walls_x(X,StartX,Y,Walls)),
+    /*\+ member([X,Y, Direction ], Walls),*/
     \+ member([X,Y], CURRENT_PATH),
     append(CURRENT_PATH, [[X,Y]], NEW_PATH).
 
