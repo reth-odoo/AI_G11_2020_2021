@@ -435,15 +435,13 @@ minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):- U is 1.%evaluate(P
 minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
 
 find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- 
-    /*get all possible states from current state*/
+    next_player_number(PLAYER_NUMBER,NewPlayerNumber),
     findall([NewPositions,NewNWalls,NewWalls,Move], 
     possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), 
     NewList),
-    length(NewList, Llen),
-    print(Llen),
     unzip_4(NewList,PositionsList,NWallsList,WallsList,MoveList),
-    /*pick max from these states*/
     best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPositions, NextWalls, NextNWalls, NextMove, U).
+
 
 /*if only one move, best move*/
 best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWalls], [Move], Depth, Positions, Walls, NWalls, Move, Eval) :-
@@ -457,15 +455,13 @@ best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWal
 
     /*if player has reached the goal, we don't care about values*/
 best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _, Eval2, Positions, Walls, NWalls, Move, Eval1):-
-    /*Adjust because PLAYER_NUMBER reflects the number in the new state, not the player for whom we evaluate the move*/
-    next_player_number(CurrentPNB, PLAYER_NUMBER),
     (
     (player_has_goal(OGPNB,Positions))
     ;
-    (CurrentPNB = OGPNB,                
+    (PLAYER_NUMBER = OGPNB,                
     Eval1 >= Eval2)                           
     ;
-    (CurrentPNB \= OGPNB,                        
+    (PLAYER_NUMBER \= OGPNB,                        
     Eval2 > Eval1)
     ). 
 /*if not the first, the second*/
