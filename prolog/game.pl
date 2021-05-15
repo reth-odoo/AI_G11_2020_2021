@@ -398,7 +398,7 @@ goal(4,X,Y):- X is 8, on_board(X,Y).
 player_has_goal(PNB,Positions):-nth1(PNB,Positions,[X,Y]),goal(PNB,X,Y).
 
 other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX,AY],[BX,BY],[CX,CY]]),nth1(PNB,[1,2,3,4],_,[A,B,C]),
-(goal(A,AX,AX);goal(B,BX,BY);goal(C,CX,CY)).
+(goal(A,AX,AY);goal(B,BX,BY);goal(C,CX,CY)).
 
 evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinDistance):-
     evaluate_distance_from_goal(EntityPos, G1, D1), /*G1 == Goal 1 (Pos)*/
@@ -429,27 +429,28 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 %temp_eval().
 
 /*at max depth, just evaluate*/
-minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, 0):- U is 1.%evaluate(PLAYER_NUMBER, Positions, NWalls, Walls, U).
+minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):- U is 1.%evaluate(PLAYER_NUMBER, Positions, NWalls, Walls, U).
 
 /*go down one in depth and find best utility/move starting from this state*/
-minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):-  Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
+minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
 
 find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- 
     /*get all possible states from current state*/
     findall([NewPositions,NewNWalls,NewWalls,Move], 
     possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), 
     NewList),
+    length(NewList, Llen),
+    print(Llen),
     unzip_4(NewList,PositionsList,NWallsList,WallsList,MoveList),
-    next_player_number(PLAYER_NUMBER, NewPlayerNumber),
     /*pick max from these states*/
-    best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPositions, NextWalls, NextNWalls, NextMove, Eval).
+    best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPositions, NextWalls, NextNWalls, NextMove, U).
 
 /*if only one move, best move*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWalls], [Move], Depth, Positions, Walls, Nwalls, Move, Eval) :-
+best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWalls], [Move], Depth, Positions, Walls, NWalls, Move, Eval) :-
     minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval, Depth).
 /*else do minimax to get best value, compare to best value for other states*/
 best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWalls], [Move|Moves], Depth, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, _, Eval1, Depth),
+    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, Depth),
     best_state(OGPNB, PLAYER_NUMBER, OtherPos, OtherWalls, OtherNWalls, Moves, Depth, Pos2, Walls2, NWalls2, Move2, Eval2),
     best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, Pos2, Walls2, NWalls2, Move2, Eval2, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
 
