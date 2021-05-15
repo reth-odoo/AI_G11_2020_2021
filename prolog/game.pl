@@ -311,6 +311,7 @@ evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
     evaluate_min_path_to_point(PlayerPos, GoalPos, Walls, MinPath),
     length(MinPath, Distance).
 
+/*nth1(3, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), goal(3, PGX, PGY), (PGY = PY ; PGX = PX), evaluate_min_path_to_point([PX,PY], [PGX,PGY], [[1,5,'v'], [3,3,'v'], [4,8,'v'], [7,2,'v']], PATH).*/
 evaluate_min_path_to_point(PlayerPos, GoalPos, Walls, MinPath):-
     findall(PATH, (
             path(PlayerPos, GoalPos, [], Walls, PATH),
@@ -334,7 +335,7 @@ shortest_list(Matrix, MinList) :-
 
 /*member(D, [1,2,3,4]), nth1(D, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), evaluate_min_path([PX,PY], D, [[1,5,'v'], [3,4,'h'], [4,8,'v'], [7,2,'v']], MinPath).*/
 
-/*nth1(3, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), goal(3, PGX, PGY), (PGY = PY ; PGX = PX), evaluate_min_path_to_point([PX,PY], [PGX,PGY], [[1,5,'v'], [3,3,'v'], [4,8,'v'], [7,2,'v']], PATH).*/
+/*nth1(D, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), evaluate_min_path([PX,PY], D, [[1,5,'v'], [3,3,'v'], [4,8,'v'], [7,2,'v']], PATH).*/
 evaluate_min_path([PX,PY], PLAYER_NUMBER, Walls, MinPath):-
     findall(PATH, (
             goal(PLAYER_NUMBER, PGX, PGY),
@@ -381,7 +382,7 @@ next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
         (AbsX is 1, AbsY is 0);
         (AbsX is 0, AbsY is 1)
     ),
-    (AbsX = 0 -> no_walls_v(Y,X,Walls) ; no_walls_h(X,Y,Walls)),
+    (AbsX = 0 -> no_walls_v(X,Y,Walls) ; no_walls_h(X,Y,Walls)),
     /*\+ member([X,Y, Direction ], Walls),*/
     \+ member([X,Y], CURRENT_PATH),
     append(CURRENT_PATH, [[X,Y]], NEW_PATH).
