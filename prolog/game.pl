@@ -134,6 +134,16 @@ no_walls_x(XTarg,XOrig,Y,Walls):-forall((Y2 is Y-1, (member([X,Y,'v'], Walls) ; 
 no_walls_y(YTarg,YOrig,X,Walls):-forall((X2 is X+1, (member([X,Y,'h'], Walls) ; member([X2,Y,'h'],Walls)))
                             , (biggest_of_2(YTarg,YOrig,BigY,SmallY), (BigY =< Y ; SmallY > Y))).
 
+no_walls_v(X, Y, Walls):- 
+    Y2 is Y-1,
+    \+ member([X,Y,'v'], Walls),
+    \+ member([X,Y2,'v'],Walls).
+
+no_walls_h(X, Y, Walls):- 
+    X2 is X+1,
+    \+ member([X,Y,'h'], Walls),
+    \+ member([X2,Y,'h'],Walls).
+
 
 
 
@@ -356,7 +366,7 @@ next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
         (AbsX is 1, AbsY is 0);
         (AbsX is 0, AbsY is 1)
     ),
-    (AbsX = 0 -> no_walls_y(Y,StartY,X,Walls) ; no_walls_x(X,StartX,Y,Walls)),
+    (AbsX = 1 -> no_walls_v(Y,X,Walls) ; no_walls_h(X,Y,Walls)),
     /*\+ member([X,Y, Direction ], Walls),*/
     \+ member([X,Y], CURRENT_PATH),
     append(CURRENT_PATH, [[X,Y]], NEW_PATH).
