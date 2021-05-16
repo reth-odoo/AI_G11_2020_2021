@@ -16,16 +16,16 @@
 
 </canvas>
     <br>
-    <input type=text id=playerInput></input>
+    <input type="text" id="playerInput" placeholder="move 0 0" onfocus="" onkeypress="sendCommandHandler()"></input>
     <br>
-    <span id=turnIndicator>Turn of Red</span>
+    <span id=turnIndicator>Turn of Blue</span>
     <br>
     <span id=gameErrorBox></span>
 
     <div id='chatbox'>
         <div id='chatlog'>
         </div>
-        <input type="text" name="chat" id="textbox" placeholder="Hi there! Type here to talk to me." onfocus="">
+        <input type="text" name="chat" id="textbox" placeholder="Hi there! Type here to talk to me." onfocus="" onkeypress="sendChatHandler()">
     </div>
 
 </body>

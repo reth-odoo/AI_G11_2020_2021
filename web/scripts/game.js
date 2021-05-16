@@ -68,7 +68,25 @@ class Board {
             //board_rep is a 2D-array of pawnSpaces
             this.board_rep = this.init_board()
             this.pawns = this.init_pawns()
+                //representation of start coordinates of the walls as [[x,y],...]
+            this.walls = []
 
+        }
+        //returns a list of pawn positions as [[x,y],..] in order of turns
+    getPawnPositions() {
+            let retl = []
+            this.pawns.forEach(p => {
+                retl.push(p.getCoordinates)
+            })
+            return retl;
+        }
+        //returns a list of wall numbers in order of turns as [NW1, NW2, NW3, NW4]
+    getWallNumbers() {
+            let retl = []
+            this.pawns.forEach(p => {
+                retl.push(p.wall_nb)
+            })
+            return retl
         }
         //returns null if invalid (parent_space must not be utmost right or down), new wall if valid
     add_wall(parent_space, placed_by, goes_down) {
@@ -150,6 +168,8 @@ class Board {
             }
         }
         //known OK the fact that wall only go down and right
+        this.walls.push([parent_space.x, parent_space.y])
+
         let new_wall = new Wall(parent_space, goes_down)
 
         origin_space.walls.push(new_wall)
@@ -198,8 +218,8 @@ class Board {
         let yellow = new Pawn(null, Yellow, null, null, true, BaseWalls);
 
         //add to Pawns and set parameters in the same order
-        pawns = [red, blue, green, yellow]
-        let spaces = [board[s_half][0], board[0][s_half], board[s_half][size - 1], board[size - 1][s_half]];
+        pawns = [blue, green, red, yellow]
+        let spaces = [board[s_half][0], board[size - 1][s_half], board[s_half][size - 1], board[0][s_half]];
         let goals_y = [size - 1, 0, size - 1, 0]
         let goals_x = [0, size - 1, 0, size - 1]
 
@@ -227,9 +247,10 @@ class Board {
         let H_x = x_offset + intDiv(space_size, 2) - slit_size
         let H_y = y_offset + intDiv(space_size, 2) + ((1 + size) * slit_size) + (size * space_size)
         let V_x = x_offset - space_size
-        let V_y = y_offset + ((1 + size) * slit_size) + (size * space_size) - intDiv(space_size, 2)
-        this.drawAxis(V_x, V_y, 1, 0, -1, false)
-        this.drawAxis(H_x, H_y, 'A', 1, 0, true)
+            //let V_y = y_offset + ((1 + size) * slit_size) + (size * space_size) - intDiv(space_size, 2)
+        let V_y = y_offset + slit_size + space_size - intDiv(space_size, 2)
+        this.drawAxis(V_x, V_y, 0, 0, 1, false)
+        this.drawAxis(H_x, H_y, 0, 1, 0, false)
 
 
         let pawns = this.pawns
@@ -359,12 +380,20 @@ class Pawn {
      * @param {number} wall_nb
      */
     constructor(space, color, goal_x, goal_y, AI, wall_nb) {
-        this.space = space;
-        this.color = color;
-        this.goal_x = goal_x;
-        this.goal_y = goal_y;
-        this.is_AI = AI;
-        this.wall_nb = wall_nb;
+            this.space = space;
+            this.color = color;
+            this.goal_x = goal_x;
+            this.goal_y = goal_y;
+            this.is_AI = AI;
+            this.wall_nb = wall_nb;
+        }
+        //returns coordinates as a list of [x,y] if on a space
+        //null otherwise
+    getCoordinates() {
+        if (space == null) {
+            return null;
+        }
+        return [this.space.x, this.space.y]
     }
     setSpace(space) {
         //if doesn't exist or already has pawn
@@ -503,25 +532,146 @@ class Wall {
 
 }
 
-//Turn settings
+
+
+
+
+
+
+//Game Logic
 
 //in order of play(clockwise)
 NbPlayers = 4
-PlayersAre = ["human", "ai", "human", "ai"]
-ColorTurn = ["Red", "Yellow", "Green", "Blue"]
+PlayersAre = ["human", "human", "ai", "ai"]
+ColorTurn = ["Blue", "Green", "Red", "Yellow"]
 TurnOf = 0
 
-function nextTurn() {
+function getNextTurnNb() {
     if (TurnOf >= NbPlayers - 1) {
-        TurnOf = 0
+        return 0
     } else if (TurnOf >= 0) {
-        TurnOf += 1
+        return TurnOf + 1
     } else {
-        TurnOf = 0
         alert("Turns were scrambled, back to 0")
+        return 0
     }
+}
+
+function nextTurn() {
+    //step turn indicator
+    TurnOf = getNextTurnNb()
+
+    document.getElementById("playerInput").value = ""
+    document.getElementById("gameErrorBox").innerHTML = ""
+
+    //disable or enable input
+    if (PlayersAre[TurnOf] == "ai") {
+        document.getElementById('playerInput').disabled = true;
+        getAIMove(constructStateJson())
+    } else {
+        document.getElementById('playerInput').disabled = false;
+    }
+
+
     document.getElementById("turnIndicator").innerHTML = `Turn of ${ColorTurn[TurnOf]}`
 }
+
+function getAIMove(stateJson) {
+    let oReq = new XMLHttpRequest();
+    oReq.overrideMimeType("application/json");
+    oReq.addEventListener('loadend', (event) => {
+        let resp_event = event.currentTarget;
+        if (resp_event.status != 200) {
+            alert(`The server could not provide a response ${resp_event.status} ${oReq.response.message}`);
+            return;
+        }
+
+        let resp = resp_event.response;
+        if (resp.message) {
+            parseAndExecute(resp.message);
+            return;
+        }
+        alert("invalid response from AI")
+        return;
+
+    });
+
+    oReq.responseType = "json";
+    oReq.open("POST", "/ai");
+    oReq.setRequestHeader('Content-Type', 'application/json');
+    oReq.send(JSON.stringify(stateJson));
+}
+
+
+function parseAndExecute(command_str) {
+    let split_cmd = command_str.split(" ")
+    if (split_cmd.length < 3 || split_cmd.length > 4) {
+        displayError("should be 'move x y' or 'wall x y h/v")
+        return
+    }
+    let command = split_cmd[0]
+    let x_str = split_cmd[1]
+    let y_str = split_cmd[2]
+
+    let x = parseInt(x_str);
+    let y = parseInt(y_str);
+    if (isNaN(x) || isNaN(y)) {
+        displayError("x and y should be coordinates")
+        return
+    }
+    if (!(validCoordinate(x) && validCoordinate(y))) {
+        displayError("x and y should be between 0 and 8")
+        return
+    }
+
+    if (command == "wall") {
+        let direction_str = split_cmd[3]
+        if (direction_str == "v")
+            placeWall(x, y, true)
+        else if (direction_str == "h")
+            placeWall(x, y, false)
+        else {
+            displayError("direction should be 'v' for vertical or 'h' for horizontal")
+            return
+        }
+    } else if (command == "move") {
+        moveTo(x, y)
+    } else {
+        displayError("should be 'move' or 'wall'");
+        return
+    }
+
+
+}
+
+function constructStateJson() {
+    return {
+        "pawns": BOARD.getPawnPositions,
+        "walls": BOARD.walls,
+        "wall_numbers": BOARD.getWallNumbers,
+        "player_number": TurnOf + 1
+    }
+}
+
+
+
+let sendCommandHandler = (e) => {
+    var x = e || window.event;
+    var key = (x.keyCode || x.which);
+    if (key == 13 || key == 3) {
+        let inP = document.getElementById('playerInput')
+        if (inP == document.activeElement)
+            parseAndExecute(inP.value)
+    }
+}
+
+
+
+
+
+
+
+
 
 //simplified interface
 
@@ -530,10 +680,10 @@ function displayError(errorString) {
 }
 
 function moveTo(x, y) {
-    x = x - 1
-    y = BOARD.size - y
+    /*x = x - 1
+    y = BOARD.size - y*/
 
-    if (x < 0 || x > BOARD.size - 1 || y < 0 || y > BOARD.size - 1)
+    if (!(validCoordinate(x) && validCoordinate(y)))
         alert("invalid coordinates")
 
     let p = BOARD.pawns[TurnOf]
@@ -547,8 +697,8 @@ function moveTo(x, y) {
 }
 
 function placeWall(x, y, vert) {
-    x = x - 1
-    y = BOARD.size - y
+    /*x = x - 1
+    y = BOARD.size - y*/
 
     let p = BOARD.pawns[TurnOf]
 
@@ -562,4 +712,8 @@ function placeWall(x, y, vert) {
         displayError("you do not have any more walls")
     }
     BOARD.draw()
+}
+
+function validCoordinate(x) {
+    return !(x < 0 || x > BOARD.size - 1)
 }

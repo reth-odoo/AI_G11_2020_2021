@@ -35,7 +35,7 @@ function getBotResponse(field, userInput) {
 
 }
 
-function send() {
+function sendChat() {
     let inputBox = getInputBox();
     if (inputBox.value != "") {
 
@@ -73,10 +73,11 @@ function send() {
     }
 }
 
-document.onkeypress = (e) => {
+let sendChatHandler = (e) => {
     var x = e || window.event;
     var key = (x.keyCode || x.which);
     if (key == 13 || key == 3) {
-        send();
+        if (getInputBox() == document.activeElement)
+            sendChat();
     }
-};
+}
