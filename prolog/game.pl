@@ -404,8 +404,7 @@ other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX,AY],[BX,BY],[CX,CY]]),n
 
 /*at max depth, just evaluate*/
 minmax(PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):-
-    nth1(PLAYER_NUMBER, Positions, [X,Y]),
-    ( goal(PLAYER_NUMBER, X, Y) -> U is 99 ;
+    ( player_has_goal(PLAYER_NUMBER, Positions) -> U is 99 ;
     evaluate(PLAYER_NUMBER, Positions, Walls, U) ),!.
 
 /*minimax implementation*/
