@@ -254,9 +254,9 @@ nth1(PNB,NWalls,PNWalls,ONWalls), member(PNWalls,[1,2,3,4,5]), NewPNWalls is PNW
 
 /*enumerated so it can go both ways*/
 next_player_number(4,1).
-next_player_number(3,4).
-next_player_number(2,3).
-next_player_number(1,2).
+next_player_number(1,3).
+next_player_number(3,2).
+next_player_number(2,4).
 /*next_player_number(NB,NewNB):- NB>=0, NB<4, NewNB is NB+1.*/
 
 /*the game has to not be over*/
@@ -429,7 +429,7 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 %temp_eval().
 
 /*at max depth, just evaluate*/
-minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):- U is 1.%evaluate(PLAYER_NUMBER, Positions, Walls, U).
+minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):- evaluate(PLAYER_NUMBER, Positions, Walls, U).
 
 /*go down one in depth and find best utility/move starting from this state*/
 minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
