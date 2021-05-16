@@ -2,7 +2,7 @@
 %or include raw with :- include(server.pl).
 
 :-include(chat).
-:-include(game).
+
 
 /*imports*/
 :- module(server,

@@ -1,4 +1,5 @@
 :- use_module(library(lists)).
+:-include(game).
 
 /* --------------------------------------------------------------------- */
 /*                                                                       */
@@ -82,7 +83,7 @@ mclef(barrieres,5).
 mclef(deplacer,2).
 mclef(sauter,3).
 mclef(placer,4).
-mclef(conseil,6).
+mclef(coup,3).
 
 % -------------------------ORDRE---------------------------------%
 
@@ -125,12 +126,12 @@ regle_rep(placer,4,
 [ un, pion, 'adverse.' ] ]).
 
 % ------------------------CONSEIL---------------------------------%
-case(E5).
 
-regle_rep(conseil,6,
-  [ [ X, quel, coup ], 2 ],
-  [X,'-',Y]) :-
-         case(Y). /* Need call to AI ? */
+regle_rep(coup,3,
+  [ [X, quel, coup] ],
+  [ [X,'-',NextMove] ]) :-
+         nth1(PLAYER_NUMBER, [bleu,rouge,vert,jaune], X),
+         minmax(PLAYER_NUMBER, PLAYER_NUMBER, [[4,0], [4,8], [8,4], [0,4]], [], [5,5,5,5], NextMove, U, 1). /* Need call to AI ? */
    
 
 
