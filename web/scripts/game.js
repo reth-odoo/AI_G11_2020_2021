@@ -542,7 +542,7 @@ class Wall {
 //in order of play(clockwise)
 NbPlayers = 4
 PlayersAre = ["human", "ai", "human", "ai"]
-ColorTurn = ["Blue", "Red", "Green", "Yellow"]
+ColorTurn = ["Blue", "Green", "Red", "Yellow"]
 TurnOf = 0
 
 function getNextTurnNb() {

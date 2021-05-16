@@ -90,7 +90,7 @@ mclef(coup,3).
 regle_rep(commence,1,
   [ qui, commence, le, jeu ],
   [ [ 'c\'est', au, pion, bleu, de, commencer ],
-    [ puis, aux, pions, "rouge," , vert, et, "jaune." ] ] ,_,_,_,_).
+    [ puis, aux, pions, "vert," , rouge, et, "jaune." ] ] ,_,_,_,_).
 
 % ----------------------NB_BARRIERES------------------------------%
 
