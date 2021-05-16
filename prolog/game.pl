@@ -27,12 +27,17 @@ insertAfter([L|OL],X,[L|FL]):- insertAfter(OL,X,FL).
 
 manhattanDistance(X1,Y1,X2,Y2,D):- DX is X2-X1, DY is Y2-Y1, D is abs(DX)+abs(DY).
 
+unzip_2([[A,B]],[A],[B]).
+unzip_2([[A,B]|L],[A|X],[B|Y]):- unzip_2(L,X,Y).
+
 unzip_3([[A,B,C]],[A],[B],[C]).
 unzip_3([[A,B,C]|L],[A|X],[B|Y],[C|Z]):- unzip_3(L,X,Y,Z).
 
 unzip_4([[A,B,C,D]],[A],[B],[C],[D]).
 unzip_4([[A,B,C,D]|L],[A|W],[B|X],[C|Y],[D|Z]):- unzip_4(L,W,X,Y,Z).
 
+unzip_5([[A,B,C,D,E]],[A],[B],[C],[D],[E]).
+unzip_5([[A,B,C,D,E]|L],[A|W],[B|X],[C|Y],[D|Z], [E|U]):- unzip_5(L,W,X,Y,Z,U).
 
 /*DATA Representation
 NWaals = [NWaals1, NWaals2, NWalls3, NWaals4]
@@ -272,48 +277,39 @@ next_player_number(PLAYER_NUMBER,NewPlayerNumber),
 ).
 
 
+move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPositions, NewWalls, NewNWalls):-
+forall(member(PNB,[1,2,3,4]), not(player_has_goal(PNB,Positions))),
+(
+    (place_wall(PLAYER_NUMBER, X, Y, D, Walls, NWalls, NewWalls, NewNWalls), NewPositions = Positions, format(atom(Move),'~s ~d ~d ~s', ['wall', X, Y, D]))
+    ;
+    (move(PLAYER_NUMBER, Positions, X, Y, Walls, NewPositions), NewWalls = Walls, NewNWalls = NWalls, format(atom(Move),'~s ~d ~d', ['move', X, Y]))
+).
+
 
 
 %choose_evaluation Jeremie
 /*evaluation should represent the utility of a certain state for:
 -The current player
--All other participants (as one entity -> just sum or more complex?)*/
-
-evaluate(PLAYER_NUMBER, Positions/*,[NW1,NW2,NW3,NW4]*/, Walls, Eval):- /*Some changes based on minimax(OGPNB, PLAYER_NUMBER, Positions, Walls, _, Eval) body */
+*/
+evaluate(PLAYER_NUMBER, Positions, Walls, Eval):-
     nth1(PLAYER_NUMBER, Positions, [PX,PY]), /*get current player position*/
-    evaluate_min_real_distance([PX,PY], PLAYER_NUMBER, Walls, MinPDistance),
-    /*manhattanDistance(PX,PY,PGX,PGY,MinPDistance),*/ /*distance for current player */
+    evaluate_min_real_distance([PX,PY], PLAYER_NUMBER, Walls, MinPDistance), /*distance for current player */
     findall(Distance, (
         member(ENTITY,[1,2,3,4]),
         ENTITY \= PLAYER_NUMBER,
         nth1(ENTITY, Positions, [EX,EY]),
         evaluate_min_real_distance([EX,EY], ENTITY, Walls, Distance)
-        /*manhattanDistance(EX,EY,EGX,EGY,Distance)*/
     ), [D1,D2,D3]), /*All min distances for AI*/
     Min2 is min(D2, D3),
     MinEDistance is min(D1, Min2), /*Min goal distance for AI */
-    Eval is MinEDistance - MinPDistance, !. /* Eval = difference between Player Min distance and AI Min distance. More Player distance = better eval, More AI distance = worse eval*/
-
-    /*forall((member(ENTITY,[1,2,3,4]), ENTITY \= PLAYER_NUMBER), (
-        nth0(ENTITY, Positions, EntityPos),
-        evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinEDistance),
-    ) )*/
-
-/*evaluate(1, [[1,3],[2,4],[3,5],[8,0]], [4,4,4,4], [[1,5,'v'], [3,4,'h'], [4,8,'v'], [7,2,'v']], Eval).*/
-/*member(D, [1,2,3,4]), nth1(D, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), evaluate_min_real_distance([PX,PY], D, [[1,5,'v'], [3,4,'h'], [4,8,'v'], [7,2,'v']], MinPDistance).*/
-
-/* enemywins > playerwins > player_distance_from_goal = ennemi_distance_from_goal > NWalls */
-/*getDirection([X1,Y1], [X2,Y2], Direction):-
-    (
-        X1 != X2 -> Direction = 'h'; Direction = 'v'
-    ).*/
+    Eval is MinEDistance - MinPDistance, !. 
     
-/* evaluate_real_distance([1,0], [2,1], [[0,1,'h'],[1,1,'v'],[2,0,'v']], D).*/
+%gets the distance to a specific point.
 evaluate_real_distance(PlayerPos, GoalPos, Walls, Distance):-
     evaluate_min_path_to_point(PlayerPos, GoalPos, Walls, MinPath),
     length(MinPath, Distance).
 
-/*nth1(3, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), goal(3, PGX, PGY), (PGY = PY ; PGX = PX), evaluate_min_path_to_point([PX,PY], [PGX,PGY], [[1,5,'v'], [3,3,'v'], [4,8,'v'], [7,2,'v']], PATH).*/
+%gets the minimum path to a specific point
 evaluate_min_path_to_point(PlayerPos, GoalPos, Walls, MinPath):-
     findall(PATH, (
             path(PlayerPos, GoalPos, [], Walls, PATH),
@@ -324,6 +320,7 @@ evaluate_min_path_to_point(PlayerPos, GoalPos, Walls, MinPath):-
     ),
     shortest_list(PATHS, MinPath).
 
+%gets the shortest list in a matrix.
 shortest_list(Matrix, MinList) :-
     findall(LENGTH, (
             member(List, Matrix),
@@ -335,9 +332,8 @@ shortest_list(Matrix, MinList) :-
     nth0(Index, LENGTHS, MinLength),
     nth0(Index, Matrix, MinList), !.
 
-/*member(D, [1,2,3,4]), nth1(D, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), evaluate_min_path([PX,PY], D, [[1,5,'v'], [3,4,'h'], [4,8,'v'], [7,2,'v']], MinPath).*/
 
-/*nth1(D, [[1,3],[2,4],[3,5],[8,0]], [PX,PY]), evaluate_min_path([PX,PY], D, [[1,5,'v'], [3,3,'v'], [4,8,'v'], [7,2,'v']], PATH).*/
+%gets the minimum path to the pawn's goal.
 evaluate_min_path([PX,PY], PLAYER_NUMBER, Walls, MinPath):-
     findall(PATH, (
             goal(PLAYER_NUMBER, PGX, PGY),
@@ -347,12 +343,13 @@ evaluate_min_path([PX,PY], PLAYER_NUMBER, Walls, MinPath):-
     ),
     shortest_list(PATHS, MinPath).
 
+%gets the minimum distance between the pawn and its goal.
 evaluate_min_real_distance([PX,PY], PLAYER_NUMBER, Walls, Distance):-
     evaluate_min_path([PX,PY], PLAYER_NUMBER, Walls, MinPath),
     length(MinPath, Distance).
 
-/*path([0,0], [2,0], [[0,0]], [[1,0,'h'],[1,1,'v']], P).*/
-/*path([1,0], [2,1], [[1,0]], [[0,1,'h'],[1,1,'v'],[2,0,'v']], D).*/
+%Creates a path to the player goal.
+%RPATH is an acumulator. FPATH is the final PATH.
 path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
     ((last(RPATH, Goal),
      append([],[GX,GY], Goal)) -> append([],FPATH, RPATH);
@@ -372,10 +369,8 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
     nth0(Index, PATHS, NEPATH),
     last(NEPATH, Pos),
     path(Pos, [GX,GY], NEPATH, Walls, FPATH)), !.
-/*path(PlayerPos, [GX,GY], RPATH, Walls, RPATH).*/
 
-head([H,_], H).
-/*next_position([0,0], [[1,1],[0,1]], [], P).*/
+%Add a move to the Path
 next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
     on_board(X,Y),
     abs(X-StartX, AbsX),
@@ -385,7 +380,6 @@ next_position([StartX, StartY], CURRENT_PATH, Walls, NEW_PATH):-
         (AbsX is 0, AbsY is 1)
     ),
     (AbsX = 0 -> no_walls_v(X,Y,Walls) ; no_walls_h(X,Y,Walls)),
-    /*\+ member([X,Y, Direction ], Walls),*/
     \+ member([X,Y], CURRENT_PATH),
     append(CURRENT_PATH, [[X,Y]], NEW_PATH).
 
@@ -429,43 +423,56 @@ evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Dis
 %temp_eval().
 
 /*at max depth, just evaluate*/
-minmax(_, PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):- evaluate(PLAYER_NUMBER, Positions, Walls, U).
+minmax(PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):-
+    nth1(PLAYER_NUMBER, Positions, [X,Y]),
+    ( goal(PLAYER_NUMBER, X, Y) -> U is 99 ;
+    evaluate(PLAYER_NUMBER, Positions, Walls, U) ),!.
+
+/*minimax implementation*/
+minmax(PLAYER_NUMBER, Positions, Walls, NWalls, NextMove,  BestU, Depth):-
+    next_player_number(PLAYER_NUMBER,NewPlayerNumber),
+    minmaxMax(PLAYER_NUMBER, NewPlayerNumber, Positions, Walls, NWalls, NextMove,  BestU, Depth), !.
+
+
+/*at max depth, just evaluate*/
+minmaxMax(PLAYER_NUMBER, NewPlayerNumber, Positions, Walls, NWalls, NextMove,  BestU, 0):-
+    minmax(PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, BestU, 0).
+
+
+/*Maximize player*/
+minmaxMax(PLAYER_NUMBER, NewPlayerNumber, Positions, Walls, NWalls, NextMove,  BestU, Depth):-
+    ( Depth < 1 -> minmax(PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, BestU, 0) ;
+    D2 is Depth-1,
+    findall([Move, U], 
+        (
+        possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, _, NewPositions, NewWalls, NewNWalls), 
+        minmaxMin(NewPlayerNumber, PLAYER_NUMBER, NewPositions, NewWalls, NewNWalls, _, U, D2)),
+    NewList),
+    unzip_2(NewList,Moves,US),
+    max_list(US, BestU),
+    nth0(Index, US, BestU),
+    nth0(Index, Moves, NextMove), !).
+
+/*at max depth, just evaluate*/
+minmaxMin(PLAYER_NUMBER, NewPlayerNumber, Positions, Walls, NWalls, NextMove,  BestU, 0):-
+    minmax(PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, BestU, 0).
+
+/*Minimize player*/
+minmaxMin(PLAYER_NUMBER, NewPlayerNumber, Positions, Walls, NWalls, NextMove,  BestU, Depth):-
+    ( Depth < 1 -> minmax(PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, BestU, 0) ;
+    D2 is Depth-1,
+    findall([Move, U], 
+        (
+        possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, _, NewPositions, NewWalls, NewNWalls),       
+        minmaxMax(NewPlayerNumber, PLAYER_NUMBER, NewPositions, NewWalls, NewNWalls, _, U, D2)),
+    NewList),
+    unzip_2(NewList,Moves,US),
+    min_list(US, BestU),
+    nth0(Index, US, BestU),
+    nth0(Index, Moves, NextMove), !).
 
 /*go down one in depth and find best utility/move starting from this state*/
-minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- Depth>0, D2 is Depth-1, find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, D2).
 
-find_best_from(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, NextMove, U, Depth):- 
-    next_player_number(PLAYER_NUMBER,NewPlayerNumber),
-    findall([NewPositions,NewNWalls,NewWalls,Move], 
-    possible_move(PLAYER_NUMBER, Positions, Walls, NWalls, Move, NewPlayerNumber, NewPositions, NewWalls, NewNWalls), 
-    NewList),
-    unzip_4(NewList,PositionsList,NWallsList,WallsList,MoveList),
-    best_state(OGPNB, NewPlayerNumber, PositionsList, WallsList, NWallsList, MoveList, Depth, NextPositions, NextWalls, NextNWalls, NextMove, U).
-
-
-/*if only one move, best move*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions], [Walls], [NWalls], [Move], Depth, Positions, Walls, NWalls, Move, Eval) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move1, Eval, Depth).
-/*else do minimax to get best value, compare to best value for other states*/
-best_state(OGPNB, PLAYER_NUMBER, [Positions|OtherPos], [Walls|OtherWalls], [NWalls|OtherNWalls], [Move|Moves], Depth, BestPos, BestWalls, BestNWalls, BestMove, BestEval) :-
-    minmax(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move1, Eval1, Depth),
-    best_state(OGPNB, PLAYER_NUMBER, OtherPos, OtherWalls, OtherNWalls, Moves, Depth, Pos2, Walls2, NWalls2, Move2, Eval2),
-    best_of_2(OGPNB, PLAYER_NUMBER, Positions, Walls, NWalls, Move1, Eval1, Pos2, Walls2, NWalls2, Move2, Eval2, BestPos, BestWalls, BestNWalls, BestMove, BestEval).
-
-
-    /*if player has reached the goal, we don't care about values*/
-best_of_2(OGPNB,PLAYER_NUMBER, Positions, Walls, NWalls, Move, Eval1, _, _, _, _, Eval2, Positions, Walls, NWalls, Move, Eval1):-
-    (
-    (player_has_goal(OGPNB,Positions))
-    ;
-    (PLAYER_NUMBER = OGPNB,                
-    Eval1 >= Eval2)                           
-    ;
-    (PLAYER_NUMBER \= OGPNB,                        
-    Eval2 > Eval1)
-    ). 
-/*if not the first, the second*/
-best_of_2(_,_,  _,_,_, _, _, Positions, Walls, NWalls, Move, Eval, Positions, Walls, NWalls, Move, Eval).
 
 /*
 :-best_state(4,1,[[[5,0],[8,5],[5,8],[0,5]],[[5,0],[8,5],[5,8],[0,5]]],[[],[]],[[5,5,5,5],[5,5,5,5]],[_,_],1,P,W,NW,_,E).
