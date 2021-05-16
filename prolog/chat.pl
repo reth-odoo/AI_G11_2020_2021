@@ -25,17 +25,17 @@
 
 /*                      !!!    A MODIFIER   !!!                          */
 
-produire_reponse([fin],[L1]) :-
+produire_reponse([fin],[L1],_, _, _, _) :-
    L1 = [merci, de, m, '\'', avoir, consulte], !.    
 
-produire_reponse(L,Rep) :-
-%   write(L),
+produire_reponse(L,Rep, PlayerNumber, Positions, WallPositions, WallNumbers) :-
+ %  write(L),
    mclef(M,_), member(M,L),
-   clause(regle_rep(M,_,Pattern,Rep),Body),
+   clause(regle_rep(M,_,Pattern,Rep, PlayerNumber, Positions, WallPositions, WallNumbers),Body),
    match_pattern(Pattern,L),
    call(Body), !.
 
-produire_reponse(_,[L1,L2, L3]) :-
+produire_reponse(_,[L1,L2, L3],_,_,_,_) :-
    L1 = [je, ne, sais, pas, '.'],
    L2 = [les, etudiants, vont, m, '\'', aider, '.' ],
    L3 = ['vous le verrez !'].
@@ -90,13 +90,13 @@ mclef(coup,3).
 regle_rep(commence,1,
   [ qui, commence, le, jeu ],
   [ [ 'c\'est', au, pion, bleu, de, commencer ],
-    [ puis, aux, pions, "rouge," , vert, et, "jaune." ] ] ).
+    [ puis, aux, pions, "rouge," , vert, et, "jaune." ] ] ,_,_,_,_).
 
 % ----------------------NB_BARRIERES------------------------------%
 
 regle_rep(barrieres,5,
   [ [ combien ], 3, [ barrieres ], 5, [ debut, du, jeu ] ],
-  [ [ vous, disposez, de, X, "barrieres." ] ]) :-
+  [ [ vous, disposez, de, X, "barrieres." ] ] ,_,_,_,_) :-
 
      nb_barriere_par_joueur(X).
    
@@ -104,34 +104,34 @@ regle_rep(barrieres,5,
 
 regle_rep(barrieres,5,
   [ [ combien ], 3, [ barrieres ], 5, [ debut, du, jeu ] ],
-  [ [ vous, disposez, de, X, "barrieres." ] ]) :-
+  [ [ vous, disposez, de, X, "barrieres." ] ],_,_,_,_) :-
 
      nb_barriere_par_joueur(X).
 
 % -------------------DEPLACER_BARRIERES---------------------------%
 regle_rep(deplacer,3,
   [ [deplacer], 1, [barriere, placee] ],
-  [ [ non ] ]).
+  [ [ non ] ],_,_,_,_).
 
 % ----------------------SAUTER_PION-------------------------------%
 regle_rep(sauter,3,
   [  [ sauter,  au, dessus ], 2, [ pion ] ],
   [ [ 'oui,', 's\'il' , 'n\'est', pas, suivi, 'd\'un', autre, pion, ou ] ,
- [ 'd\'une', 'barriere.' ] ]).
+ [ 'd\'une', 'barriere.' ] ],_,_,_,_).
 
 % --------------------PLACER-BARRIERES----------------------------%
 regle_rep(placer,4,
   [  [ placer, une, barriere, ou, je, veux ] ],
   [ [ en, principe, oui, mais, vous, ne, pouvez, pas, enfermer ],
-[ un, pion, 'adverse.' ] ]).
+[ un, pion, 'adverse.' ] ],_,_,_,_).
 
 % ------------------------CONSEIL---------------------------------%
 
 regle_rep(coup,3,
   [ [X, quel, coup] ],
-  [ [X,'-',NextMove] ]) :-
+  [ [X,'-',NextMove] ],PlayerNumber, Positions, WallPositions, WallNumbers) :-
          nth1(PLAYER_NUMBER, [bleu,rouge,vert,jaune], X),
-         minmax(PLAYER_NUMBER, PLAYER_NUMBER, [[4,0], [4,8], [8,4], [0,4]], [], [5,5,5,5], NextMove, U, 1). /* Need call to AI ? */
+         minmax(PlayerNumber, Positions, WallPositions, WallNumbers, NextMove, U, 2). /* Need call to AI ? */
    
 
 
@@ -440,9 +440,9 @@ test(L_Mots, S):-
 /*             ACTIVATION DU PROGRAMME APRES COMPILATION                 */
 /*                                                                       */
 /* --------------------------------------------------------------------- */
-
+/*
 :- quoridoria.
-
+*/
 
 
 

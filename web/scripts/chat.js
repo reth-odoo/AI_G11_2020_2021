@@ -31,7 +31,10 @@ function getBotResponse(field, userInput) {
     oReq.responseType = "json";
     oReq.open("POST", "/chat");
     oReq.setRequestHeader('Content-Type', 'application/json');
-    oReq.send(JSON.stringify({ message: userInput }));
+    let stateJson = constructStateJson();
+    stateJson["message"] = userInput;
+    console.log(stateJson)
+    oReq.send(JSON.stringify(stateJson));
 
 }
 

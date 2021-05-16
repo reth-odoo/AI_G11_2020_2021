@@ -94,11 +94,12 @@ get response,
 go through custom fonctor to get a string, 
 respond*/ 
 chat_handler(Req):-http_read_json_dict(Req, Dict),
+parse_quoridor_state(Dict, PlayerNumber, Positions, WallPositions, WallNumbers),
 string_lower(Dict.message, Message),
 string_codes(Message,IntMessage),
 clean_string(IntMessage,Cleanstring),
 extract_atomics(Cleanstring,ListOfAtomics),
-produire_reponse(ListOfAtomics,Response_atomics),
+produire_reponse(ListOfAtomics,Response_atomics,PlayerNumber, Positions, WallPositions, WallNumbers),
 get_string(Response_atomics, Response),
 reply_json_dict(_{message:Response}).
 
