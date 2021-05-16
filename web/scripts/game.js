@@ -645,9 +645,9 @@ function parseAndExecute(command_str) {
 
 function constructStateJson() {
     return {
-        "pawns": BOARD.getPawnPositions,
+        "pawns": BOARD.getPawnPositions(),
         "walls": BOARD.walls,
-        "wall_numbers": BOARD.getWallNumbers,
+        "wall_numbers": BOARD.getWallNumbers(),
         "player_number": TurnOf + 1
     }
 }

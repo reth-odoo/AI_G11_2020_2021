@@ -62,7 +62,7 @@ stop_server(Port) :-
 
 /*parsers*/
 
-state_from_req(Req,X):-http_read_json_dict(Req, Dict), parse_quoridor_state(Dict, PlayerNumber, Positions, WallPositions, WallNumbers).
+state_from_req(Req,PlayerNumber, Positions, WallPositions, WallNumbers):-http_read_json_dict(Req, Dict), parse_quoridor_state(Dict, PlayerNumber, Positions, WallPositions, WallNumbers).
 
 parse_quoridor_state(State, State.player_number, State.pawns, State.walls, State.wall_numbers).
 parse_quorido_command.
@@ -77,7 +77,7 @@ quoridormv_handler(Req):-state_from_req(Req, X),is_valid_move(X),reply_json_dict
 quoridorwl_handler(Req):-state_from_req(Req, X),can_place_wall(X),reply_json_dict(Out).
 
 /*2 is depth*/
-next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers):- minmax(PlayerNumber, PlayerNumber, Positions, WallPositions, WallNumbers, _, 2).
+next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers, Move):- minmax(PlayerNumber, PlayerNumber, Positions, WallPositions, WallNumbers, Move, _, 2).
 
 
 

@@ -415,7 +415,7 @@ fin(L) :- member(fin,L).
 /*                         BOUCLE PRINCIPALE                             */
 /*                                                                       */
 /* --------------------------------------------------------------------- */
-
+/*
 quoridoria :- 
 
    nl, nl, nl,
@@ -430,7 +430,7 @@ quoridoria :-
       ecrire_reponse(L_ligne_reponse),
    fin(L_Mots), !.
    
-
+*/
 test(L_Mots, S):- 
    produire_reponse(L_Mots,L_ligne_reponse),
    get_string(L_ligne_reponse, S).
