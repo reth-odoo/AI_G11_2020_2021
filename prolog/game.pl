@@ -371,7 +371,7 @@ path(PlayerPos, [GX,GY], RPATH, Walls, FPATH):-
     nth0(Index, Distances, MinDistance),
     nth0(Index, PATHS, NEPATH),
     last(NEPATH, Pos),
-    path(Pos, [GX,GY], NEPATH, Walls, FPATH)).
+    path(Pos, [GX,GY], NEPATH, Walls, FPATH)), !.
 /*path(PlayerPos, [GX,GY], RPATH, Walls, RPATH).*/
 
 head([H,_], H).
