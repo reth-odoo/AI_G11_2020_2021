@@ -399,8 +399,6 @@ other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX,AY],[BX,BY],[CX,CY]]),n
 
 /*search space*/
 
-/*TEMPORARY EVALUATION*/
-
 /*at max depth, just evaluate*/
 minmax(PLAYER_NUMBER, Positions, Walls, NWalls, _, U, 0):-
     ( player_has_goal(PLAYER_NUMBER, Positions) -> U is 99 ;
