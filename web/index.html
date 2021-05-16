@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>game</title>
+    <script src="scripts/jquery.js"></script>
+    <script src="scripts/game.js"></script>
+    <script src="scripts/chat.js"></script>
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+
+    <canvas id="gameCanvas" width="500" height="500" style="border:1px solid #000000;">
+
+</canvas>
+    <br>
+    <input type="text" id="playerInput" placeholder="move 0 0" onfocus="" onkeypress="sendCommandHandler()"></input>
+    <br>
+    <span id=turnIndicator>Turn of Blue</span>
+    <br>
+    <span id=gameErrorBox></span>
+
+    <div id='chatbox'>
+        <div id='chatlog'>
+        </div>
+        <input type="text" name="chat" id="textbox" placeholder="Hi there! Type here to talk to me." onfocus="" onkeypress="sendChatHandler()">
+    </div>
+
+</body>
+
+</html>

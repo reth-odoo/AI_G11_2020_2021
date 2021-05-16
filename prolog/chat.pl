@@ -323,6 +323,29 @@ read_atomics(ListOfAtomics) :-
 /*                                                                       */
 /* --------------------------------------------------------------------- */
 
+/*append string to QuoridAI*/
+get_string(L,S):- get_li_string(L,S).
+
+/*append each line with \n inbetween*/
+get_li_string([]," ").
+get_li_string([Li],S):-get_line(Li,S).
+get_li_string([Li|Lls],S):-
+   get_line(Li,L), get_li_string(Lls,S2),string_concat(L,'\n',S1),string_concat(S1,S2,S).
+
+/*append each word*/
+get_line([]," ").
+get_line([M|L],S) :-
+   get_word(M,MS),
+   get_line(L,LS),
+   string_concat(MS, LS, S).
+
+
+get_word('.', '.').
+get_word('\'','\'').
+get_word(',',',').
+get_word(M,S):- string_concat(' ',M,S).
+
+
 ecrire_reponse(L) :-
    nl, write('QBot :'),
    ecrire_li_reponse(L,1,1).
@@ -408,6 +431,9 @@ quoridoria :-
    fin(L_Mots), !.
    
 
+test(L_Mots, S):- 
+   produire_reponse(L_Mots,L_ligne_reponse),
+   get_string(L_ligne_reponse, S).
 /* --------------------------------------------------------------------- */
 /*                                                                       */
 /*             ACTIVATION DU PROGRAMME APRES COMPILATION                 */

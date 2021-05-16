@@ -1,8 +1,11 @@
 %use with :- use_module(server).
 %or include raw with :- include(server.pl).
 
+:-include(chat).
+:-include(game).
 
-:- module(echo_server,
+/*imports*/
+:- module(server,
   [ start_server/0,
     stop_server/0
   ]
@@ -12,16 +15,14 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_files)).
 :- use_module(library(http/websocket)).
+:- use_module(library(http/http_client)).
+:- use_module(library(http/http_json)).
 
+/*parameters*/
 
-:- http_handler(root(.),
-                http_reply_from_files('.', []),
-                [prefix]).
+default_port(3000).
 
-:- http_handler(root(echo),
-                http_upgrade_to_websocket(echo, []),
-                [spawn([])]).
-
+/*start*/
 start_server :-
     default_port(Port),
     start_server(Port).
@@ -34,20 +35,83 @@ stop_server() :-
 stop_server(Port) :-
     http_stop_server(Port, []).
 
-default_port(3000).
+/*handlers*/
 
 
-echo(WebSocket) :-
-    ws_receive(WebSocket, Message, [format(json)]),
-    ( Message.opcode == close
-    -> true
-    ; get_response(Message.data, Response),
-      write("Response: "), writeln(Response),
-      ws_send(WebSocket, json(Response)),
-      echo(WebSocket)
-    ).
+/*web page service*/
+:- http_handler(root(.),
+                http_reply_from_files('../web', ["index.html"]),
+                [prefix]).
 
 
-get_response(Message, Response) :-
-  get_time(Time),
-  Response = _{message:Message.message, time: Time}.
+
+
+
+
+:- http_handler(root(ai),
+                quoridorai_handler,
+                [spawn([])]).
+
+:- http_handler(root(checkMove),
+                quoridormv_handler,
+                [spawn([])]).
+
+:- http_handler(root(checkWall),
+                quoridorwl_handler,
+                [spawn([])]).
+
+/*parsers*/
+
+state_from_req(Req,X):-http_read_json_dict(Req, Dict), parse_quoridor_state(Dict, PlayerNumber, Positions, WallPositions, WallNumbers).
+
+parse_quoridor_state(State, State.player_number, State.pawns, State.walls, State.wall_numbers).
+parse_quorido_command.
+
+
+
+json_state(PawnPositions, WallPositions, WallNB, JsonState):- JsonState = _{pawns: PawnPositions, walls: WallPositions, wall_numbers: WallNB}.
+
+
+quoridorai_handler(Req):- state_from_req(Req, PlayerNumber, Positions, WallPositions, WallNumbers),next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers, Move),reply_json_dict(_{message: Move}).
+quoridormv_handler(Req):-state_from_req(Req, X),is_valid_move(X),reply_json_dict(Out).
+quoridorwl_handler(Req):-state_from_req(Req, X),can_place_wall(X),reply_json_dict(Out).
+
+/*2 is depth*/
+next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers):- minmax(PlayerNumber, PlayerNumber, Positions, WallPositions, WallNumbers, _, 2).
+
+
+
+
+
+
+/*Chat Bot*/
+:- http_handler(root(chat),
+                chat_handler,
+                [spawn([])]).
+/*get the json, 
+lowercase the message like lc_string, 
+encode it to ints, ... like read_atomics, 
+get response, 
+go through custom fonctor to get a string, 
+respond*/ 
+chat_handler(Req):-http_read_json_dict(Req, Dict),
+string_lower(Dict.message, Message),
+string_codes(Message,IntMessage),
+clean_string(IntMessage,Cleanstring),
+extract_atomics(Cleanstring,ListOfAtomics),
+produire_reponse(ListOfAtomics,Response_atomics),
+get_string(Response_atomics, Response),
+reply_json_dict(_{message:Response}).
+
+
+
+
+
+/*server ping*/
+:- http_handler(root(ping),
+                ping_handler,
+                [spawn([])]).
+ping_handler(Req):-reply_json_dict(_{pong: true}).
+
+
+
