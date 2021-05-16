@@ -541,18 +541,21 @@ class Wall {
 
 //in order of play(clockwise)
 NbPlayers = 4
-PlayersAre = ["human", "human", "ai", "ai"]
-ColorTurn = ["Blue", "Green", "Red", "Yellow"]
+PlayersAre = ["human", "ai", "human", "ai"]
+ColorTurn = ["Blue", "Red", "Green", "Yellow"]
 TurnOf = 0
 
 function getNextTurnNb() {
-    if (TurnOf >= NbPlayers - 1) {
-        return 0
-    } else if (TurnOf >= 0) {
-        return TurnOf + 1
-    } else {
-        alert("Turns were scrambled, back to 0")
-        return 0
+
+    switch (TurnOf) {
+        case (0):
+            return 2;
+        case (1):
+            return 3;
+        case (2):
+            return 1;
+        case (3):
+            return 0;
     }
 }
 
