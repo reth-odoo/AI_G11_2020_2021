@@ -76,7 +76,7 @@ class Board {
     getPawnPositions() {
             let retl = []
             this.pawns.forEach(p => {
-                retl.push(p.getCoordinates)
+                retl.push(p.getCoordinates())
             })
             return retl;
         }
@@ -389,7 +389,7 @@ class Pawn {
         //returns coordinates as a list of [x,y] if on a space
         //null otherwise
     getCoordinates() {
-        if (space == null) {
+        if (this.space == null) {
             return null;
         }
         return [this.space.x, this.space.y]
@@ -644,11 +644,15 @@ function parseAndExecute(command_str) {
 }
 
 function constructStateJson() {
+    let p = BOARD.getPawnPositions()
+    let w = BOARD.walls
+    let wn = BOARD.getWallNumbers()
+    let t = TurnOf + 1
     return {
-        "pawns": BOARD.getPawnPositions(),
-        "walls": BOARD.walls,
-        "wall_numbers": BOARD.getWallNumbers(),
-        "player_number": TurnOf + 1
+        "pawns": p,
+        "walls": w,
+        "wall_numbers": wn,
+        "player_number": t
     }
 }
 
