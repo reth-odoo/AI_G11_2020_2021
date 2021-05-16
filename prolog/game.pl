@@ -394,27 +394,7 @@ player_has_goal(PNB,Positions):-nth1(PNB,Positions,[X,Y]),goal(PNB,X,Y).
 other_has_goal(PNB,Positions):-nth1(PNB,Positions,_,[[AX,AY],[BX,BY],[CX,CY]]),nth1(PNB,[1,2,3,4],_,[A,B,C]),
 (goal(A,AX,AY);goal(B,BX,BY);goal(C,CX,CY)).
 
-evaluate_min_distance(EntityPos, [G1,G2,G3,G4], MinDistance):-
-    evaluate_distance_from_goal(EntityPos, G1, D1), /*G1 == Goal 1 (Pos)*/
-    evaluate_distance_from_goal(EntityPos, G2, D2),
-    evaluate_distance_from_goal(EntityPos, G3, D3),
-    evaluate_distance_from_goal(EntityPos, G4, D4),
-    Min1 is min(D3, D4),
-    Min2 is min(D2, Min1),
-    MinDistance is min(D1, Min2). /* Minimal distance between entity and one goal */
 
-evaluate_distance_from_goal([PX,PY], [GX,GY], Distance):- /*P == player,  G == goal*/
-    Distance is sqrt((GX-PX)^2 + (GY-PY)^2).
-
-evaluate_distance_from_goal(PLAYER_NUMBER, Positions, GOAL_NUMBER, GoalsPos, Distance):-
-    nth0(PLAYER_NUMBER, Positions, [X1,Y1]), /*get player position */
-    nth0(GOAL_NUMBER, GoalsPos, [X2,Y2]), /* get goal position (this not work : goal(GOAL_NUMBER, X2, Y2)) */
-    Distance is sqrt((X2-X1)^2 + (Y2-Y1)^2). /* set distance to sqrt((X2-X1)² + (Y2-Y1)²). */
-
-
-
-
-%evaluate_distance_from_goal(1, [[1,2],[1,3],[2,4],[3,5]], 2, [[4,5],[3,8],[1,7],[3,0]], D).
 
 
 /*search space*/
