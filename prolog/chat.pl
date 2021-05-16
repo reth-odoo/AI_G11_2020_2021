@@ -128,10 +128,10 @@ regle_rep(placer,4,
 % ------------------------CONSEIL---------------------------------%
 
 regle_rep(coup,3,
-  [ [X, quel, coup] ],
+  [ [quel],3,[coup],3,[X] ],
   [ [X,'-',NextMove] ],PlayerNumber, Positions, WallPositions, WallNumbers) :-
          nth1(PLAYER_NUMBER, [bleu,rouge,vert,jaune], X),
-         minmax(PlayerNumber, Positions, WallPositions, WallNumbers, NextMove, U, 2). /* Need call to AI ? */
+         minmax(PLAYER_NUMBER, Positions, WallPositions, WallNumbers, NextMove, U, 2). /* Need call to AI ? */
    
 
 
