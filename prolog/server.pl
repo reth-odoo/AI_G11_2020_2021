@@ -2,7 +2,7 @@
 %or include raw with :- include(server.pl).
 
 :-include(chat).
-:-include(game).
+
 
 /*imports*/
 :- module(server,
@@ -77,8 +77,7 @@ quoridormv_handler(Req):-state_from_req(Req, X),is_valid_move(X),reply_json_dict
 quoridorwl_handler(Req):-state_from_req(Req, X),can_place_wall(X),reply_json_dict(Out).
 
 /*2 is depth*/
-next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers, Move):- minmax(PlayerNumber, PlayerNumber, Positions, WallPositions, WallNumbers, Move, _, 2).
-
+next_ai_move(PlayerNumber, Positions, WallPositions, WallNumbers, Move):- minmax(PlayerNumber, Positions, WallPositions, WallNumbers, Move, _, 2).
 
 
 
