@@ -79,14 +79,17 @@ nb_barriere_par_joueur(5).
 mclef(commence,10).
 mclef(barriere,5).
 mclef(barrieres,5).
-
+mclef(deplacer,2).
+mclef(sauter,3).
+mclef(placer,4).
+mclef(conseil,6).
 
 % -------------------------ORDRE---------------------------------%
 
 regle_rep(commence,1,
   [ qui, commence, le, jeu ],
-  [ [ "c'est", au, pion, bleu, de, commencer ],
-    [ puis, aux, pions, "rouge," , vert, et, "bleu." ] ] ).
+  [ [ 'c\'est', au, pion, bleu, de, commencer ],
+    [ puis, aux, pions, "rouge," , vert, et, "jaune." ] ] ).
 
 % ----------------------NB_BARRIERES------------------------------%
 
@@ -103,6 +106,32 @@ regle_rep(barrieres,5,
   [ [ vous, disposez, de, X, "barrieres." ] ]) :-
 
      nb_barriere_par_joueur(X).
+
+% -------------------DEPLACER_BARRIERES---------------------------%
+regle_rep(deplacer,3,
+  [ [deplacer], 1, [barriere, placee] ],
+  [ [ non ] ]).
+
+% ----------------------SAUTER_PION-------------------------------%
+regle_rep(sauter,3,
+  [  [ sauter,  au, dessus ], 2, [ pion ] ],
+  [ [ 'oui,', 's\'il' , 'n\'est', pas, suivi, 'd\'un', autre, pion, ou ] ,
+ [ 'd\'une', 'barriere.' ] ]).
+
+% --------------------PLACER-BARRIERES----------------------------%
+regle_rep(placer,4,
+  [  [ placer, une, barriere, ou, je, veux ] ],
+  [ [ en, principe, oui, mais, vous, ne, pouvez, pas, enfermer ],
+[ un, pion, 'adverse.' ] ]).
+
+% ------------------------CONSEIL---------------------------------%
+case(E5).
+
+regle_rep(conseil,6,
+  [ [ X, quel, coup ], 2 ],
+  [X,'-',Y]) :-
+         case(Y). /* Need call to AI ? */
+   
 
 
 
